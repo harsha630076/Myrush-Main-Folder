@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from datetime import timedelta, datetime
-from typing import Annotated
+from typing import Annotated, Optional
 import schemas, crud, models, database
 from jose import JWTError, jwt
 import os
@@ -21,7 +21,7 @@ ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", 24 * 
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
 
-def create_access_token(data: dict, expires_delta: timedelta | None = None):
+def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     to_encode = data.copy()
     if expires_delta:
         expire = datetime.utcnow() + expires_delta

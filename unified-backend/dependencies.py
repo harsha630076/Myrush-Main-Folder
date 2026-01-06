@@ -7,7 +7,7 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
 from jose import JWTError, jwt
-from typing import Annotated
+from typing import Annotated, Optional
 import os
 from dotenv import load_dotenv
 import models
@@ -178,7 +178,7 @@ def get_admin_branch_filter(
 def get_current_user_optional(
     token: str = Depends(oauth2_scheme),
     db: Session = Depends(get_db)
-) -> models.User | None:
+) -> Optional[models.User]:
     """
     Optional user authentication
     Returns user if token is valid, None otherwise

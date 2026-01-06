@@ -6,6 +6,7 @@ import uuid
 from datetime import timedelta, datetime
 import random
 from sqlalchemy import and_
+from typing import Optional
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
@@ -36,7 +37,7 @@ def create_user(db: Session, user: schemas.UserCreate):
     db.refresh(db_user)
     return db_user
 
-def create_user_with_phone(db: Session, phone_number: str, profile_data: dict | None = None):
+def create_user_with_phone(db: Session, phone_number: str, profile_data: Optional[dict] = None):
     """Create a user record for a phone-based user and store profile data.
 
     `profile_data` may contain keys matching Profile fields and will be stored.
