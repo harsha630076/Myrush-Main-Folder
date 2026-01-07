@@ -1,0 +1,3 @@
+export default {
+    API_URL: 'http://65.0.195.149:8000/api/admin'
+};

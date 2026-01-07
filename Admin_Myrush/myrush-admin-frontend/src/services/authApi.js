@@ -1,6 +1,8 @@
+import config from '../config';
+
 export async function loginAdmin(mobile, password) {
   try {
-    const API_BASE = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000/api/admin';
+    const API_BASE = config.API_URL;
     const response = await fetch(`${API_BASE}/auth/admins/login`, {
       method: 'POST',
       headers: {
