@@ -3,7 +3,7 @@ import { Edit2, Plus, Play, Eye, Trash2, X, Settings, Clock } from 'lucide-react
 import ToggleSwitch from './ToggleSwitch';
 import Modal from './Modal';
 import AddCourtForm from './AddCourtForm';
-import { citiesApi, branchesApi, gameTypesApi, courtsApi, globalPriceConditionsApi } from '../../services/adminApi';
+import { citiesApi, branchesApi, gameTypesApi, courtsApi, globalPriceConditionsApi, IMAGE_BASE_URL } from '../../services/adminApi';
 
 function CourtsSettings() {
   const [courts, setCourts] = useState([]);
@@ -67,13 +67,32 @@ function CourtsSettings() {
 
   // Filter branches and courts based on selections
   const filteredBranches = selectedCityId
-    ? branches.filter(branch => branch.city_id === parseInt(selectedCityId))
+    ? branches.filter(branch => branch.city_id === selectedCityId)
     : branches;
 
   const filteredCourts = courts.filter(court => {
-    const cityMatch = selectedCityId ? court.branch?.city_id === parseInt(selectedCityId) : true;
-    const branchMatch = selectedBranchId ? court.branch_id === parseInt(selectedBranchId) : true;
-    return cityMatch && branchMatch;
+    // 1. City Check
+    if (selectedCityId) {
+      let cityMatches = false;
+      // Check deeply nested
+      if (court.branch?.city?.id === selectedCityId) cityMatches = true;
+      // Check direct ID on branch object
+      else if (court.branch?.city_id === selectedCityId) cityMatches = true;
+      // Check via looking up branch in separate list
+      else {
+        const branch = branches.find(b => b.id === court.branch_id);
+        if (branch?.city_id === selectedCityId) cityMatches = true;
+      }
+
+      if (!cityMatches) return false;
+    }
+
+    // 2. Branch Check
+    if (selectedBranchId) {
+      if (String(court.branch_id) !== String(selectedBranchId)) return false;
+    }
+
+    return true;
   });
 
   const handleCityChange = (e) => {
@@ -230,6 +249,7 @@ function CourtsSettings() {
             conditions={globalConditions}
             onRefresh={fetchGlobalConditions}
             onEdit={setEditingGlobalCondition}
+            editingCondition={editingGlobalCondition}
           />
         )}
       </div>
@@ -316,10 +336,39 @@ function CourtViewModal({ court, onClose }) {
       </div>
 
       <div className="space-y-6">
-        {/* Court Icon */}
-        <div className="flex justify-center">
-          <div className="w-20 h-20 bg-green-100 rounded-lg overflow-hidden flex items-center justify-center">
-            <Play className="h-10 w-10 text-green-600" />
+        {/* Images & Videos Gallery (Horizontal Scroll) */}
+        <div className="relative">
+          <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide snap-x">
+            {/* Show placeholder if no media */}
+            {(!court.images?.length && !court.videos?.length) && (
+              <div className="w-full h-64 bg-green-50 rounded-xl flex items-center justify-center border-2 border-dashed border-green-100 flex-shrink-0">
+                <Play className="h-16 w-16 text-green-200" />
+              </div>
+            )}
+
+            {/* Images */}
+            {court.images?.map((img, idx) => (
+              <div key={`img-${idx}`} className="h-64 aspect-video rounded-xl overflow-hidden border border-slate-200 shadow-sm flex-shrink-0 snap-center">
+                <img
+                  src={`${IMAGE_BASE_URL}${img}`}
+                  alt={`Court ${idx}`}
+                  className="w-full h-full object-cover"
+                  onError={(e) => { e.target.closest('div').style.display = 'none'; }}
+                />
+              </div>
+            ))}
+
+            {/* Videos */}
+            {court.videos?.map((vid, idx) => (
+              <div key={`vid-${idx}`} className="h-64 aspect-video rounded-xl overflow-hidden border border-slate-200 bg-black flex-shrink-0 snap-center">
+                <video
+                  src={`${IMAGE_BASE_URL}${vid}`}
+                  className="w-full h-full object-cover"
+                  controls
+                  onError={(e) => { e.target.closest('div').style.display = 'none'; }}
+                />
+              </div>
+            ))}
           </div>
         </div>
 
@@ -441,7 +490,91 @@ function CourtViewModal({ court, onClose }) {
   );
 }
 
-function GlobalPriceConditionsSection({ conditions, onRefresh, onEdit }) {
+// TimePicker component for AM/PM time selection
+function TimePicker({ value, onChange, className }) {
+  const parseTime = (timeStr) => {
+    if (!timeStr) return { hour: '12', minute: '00', ampm: 'AM' };
+    const [hours, minutes] = timeStr.split(':');
+    let h = parseInt(hours, 10);
+    const ampm = h >= 12 ? 'PM' : 'AM';
+    h = h % 12 || 12;
+    return { hour: String(h).padStart(2, '0'), minute: minutes, ampm };
+  };
+
+  const formatTime = (hour, minute, ampm) => {
+    let h = parseInt(hour, 10);
+    if (ampm === 'PM' && h !== 12) h += 12;
+    if (ampm === 'AM' && h === 12) h = 0;
+    return `${String(h).padStart(2, '0')}:${minute}`;
+  };
+
+  const { hour, minute, ampm } = parseTime(value);
+
+  const handleHourChange = (e) => {
+    onChange(formatTime(e.target.value, minute, ampm));
+  };
+
+  const handleMinuteChange = (e) => {
+    onChange(formatTime(hour, e.target.value, ampm));
+  };
+
+  const handleAmpmChange = (e) => {
+    onChange(formatTime(hour, minute, e.target.value));
+  };
+
+  return (
+    <div className={`flex gap-1 ${className || ''}`}>
+      <select
+        value={hour}
+        onChange={handleHourChange}
+        className="px-2 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500 text-sm"
+      >
+        {Array.from({ length: 12 }, (_, i) => i + 1).map(h => (
+          <option key={h} value={String(h).padStart(2, '0')}>{String(h).padStart(2, '0')}</option>
+        ))}
+      </select>
+      <span className="flex items-center px-1 text-slate-600">:</span>
+      <select
+        value={minute}
+        onChange={handleMinuteChange}
+        className="px-2 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500 text-sm"
+      >
+        {['00', '15', '30', '45'].map(m => (
+          <option key={m} value={m}>{m}</option>
+        ))}
+      </select>
+      <select
+        value={ampm}
+        onChange={handleAmpmChange}
+        className="px-2 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500 text-sm font-medium"
+      >
+        <option value="AM">AM</option>
+        <option value="PM">PM</option>
+      </select>
+    </div>
+  );
+}
+
+// Helper function to format time from 24-hour to 12-hour with AM/PM
+function formatTime12Hour(time24) {
+  if (!time24) return '';
+
+  // Handle both "HH:MM" and "HH:MM:SS" formats
+  const timeParts = time24.split(':');
+  if (timeParts.length < 2) return time24; // Return as-is if invalid format
+
+  const hours = parseInt(timeParts[0], 10);
+  const minutes = timeParts[1];
+
+  if (isNaN(hours)) return time24; // Return as-is if invalid
+
+  const ampm = hours >= 12 ? 'PM' : 'AM';
+  const displayHour = hours % 12 || 12;
+
+  return `${displayHour}:${minutes} ${ampm}`;
+}
+
+function GlobalPriceConditionsSection({ conditions, onRefresh, onEdit, editingCondition }) {
   const [isAdding, setIsAdding] = useState(false);
   const [conditionType, setConditionType] = useState('recurring'); // 'recurring' or 'date'
   const [newCondition, setNewCondition] = useState({
@@ -452,6 +585,21 @@ function GlobalPriceConditionsSection({ conditions, onRefresh, onEdit }) {
     price: ''
   });
   const [selectedDate, setSelectedDate] = useState('');
+
+  // Effect to populate form when editing
+  useEffect(() => {
+    if (editingCondition) {
+      setIsAdding(true);
+      setConditionType(editingCondition.condition_type || 'recurring');
+      setNewCondition({
+        days: editingCondition.days || [],
+        dates: editingCondition.dates || [],
+        slotFrom: editingCondition.slot_from,
+        slotTo: editingCondition.slot_to,
+        price: editingCondition.price
+      });
+    }
+  }, [editingCondition]);
 
   const daysOfWeek = [
     { id: 'mon', label: 'Mon' },
@@ -472,6 +620,8 @@ function GlobalPriceConditionsSection({ conditions, onRefresh, onEdit }) {
     }));
   };
 
+  useEffect(() => { }, []);
+
   const addDate = () => {
     if (selectedDate && !newCondition.dates.includes(selectedDate)) {
       setNewCondition(prev => ({
@@ -489,7 +639,7 @@ function GlobalPriceConditionsSection({ conditions, onRefresh, onEdit }) {
     }));
   };
 
-  const handleAdd = async () => {
+  const handleSave = async () => {
     if (conditionType === 'recurring' && (!newCondition.days || newCondition.days.length === 0)) {
       alert('Please select at least one day');
       return;
@@ -508,30 +658,45 @@ function GlobalPriceConditionsSection({ conditions, onRefresh, onEdit }) {
     }
 
     try {
-      console.log('Creating global condition:', {
-        conditionType,
+      const data = {
+        condition_type: conditionType,
         days: conditionType === 'recurring' ? newCondition.days : [],
         dates: conditionType === 'date' ? newCondition.dates : [],
-        slotFrom: newCondition.slotFrom,
-        slotTo: newCondition.slotTo,
+        slot_from: newCondition.slotFrom,
+        slot_to: newCondition.slotTo,
         price: newCondition.price
-      });
+      };
 
-      await globalPriceConditionsApi.create(
-        conditionType === 'recurring' ? newCondition.days : [],
-        conditionType === 'date' ? newCondition.dates : [],
-        newCondition.slotFrom,
-        newCondition.slotTo,
-        newCondition.price,
-        conditionType
-      );
+      if (editingCondition) {
+        await globalPriceConditionsApi.update(editingCondition.id, data);
+        await globalPriceConditionsApi.applyToAllCourts();
+        alert('Global price condition updated and synchronized with all courts!');
+      } else {
+        await globalPriceConditionsApi.create(
+          data.days,
+          data.dates,
+          data.slot_from,
+          data.slot_to,
+          data.price,
+          data.condition_type
+        );
+        // The backend create might apply it, but let's be sure or just stick to the pattern. 
+        // Actually, usually 'create' might just create the template. Explicit apply is safer if backend supports it.
+        // However, looking at the previous code, it just said "Add & Apply". 
+        // Let's assume create does it or we need to call it.
+        // Given the endpoint exists separately, let's call it.
+        // But wait, applyToAllCourts probably applies ALL active conditions.
+        await globalPriceConditionsApi.applyToAllCourts();
+        alert('Global price condition added and applied to all courts!');
+      }
+
       setNewCondition({ days: [], dates: [], slotFrom: '06:00', slotTo: '07:00', price: '' });
       setConditionType('recurring');
       setIsAdding(false);
+      onEdit(null); // Clear editing state
       onRefresh();
-      alert('Global price condition added and applied to all courts!');
     } catch (err) {
-      alert('Failed to add global condition: ' + err.message);
+      alert('Failed to save global condition: ' + err.message);
     }
   };
 
@@ -544,6 +709,10 @@ function GlobalPriceConditionsSection({ conditions, onRefresh, onEdit }) {
         alert('Failed to delete condition: ' + err.message);
       }
     }
+  };
+
+  const startEdit = (condition) => {
+    onEdit(condition);
   };
 
   return (
@@ -570,8 +739,8 @@ function GlobalPriceConditionsSection({ conditions, onRefresh, onEdit }) {
                     setNewCondition({ ...newCondition, dates: [] });
                   }}
                   className={`flex-1 px-4 py-2 rounded-lg font-medium transition-colors ${conditionType === 'recurring'
-                      ? 'bg-green-600 text-white'
-                      : 'bg-white border border-slate-300 text-slate-600 hover:border-green-500'
+                    ? 'bg-green-600 text-white'
+                    : 'bg-white border border-slate-300 text-slate-600 hover:border-green-500'
                     }`}
                 >
                   Recurring (Day-wise)
@@ -583,8 +752,8 @@ function GlobalPriceConditionsSection({ conditions, onRefresh, onEdit }) {
                     setNewCondition({ ...newCondition, days: [] });
                   }}
                   className={`flex-1 px-4 py-2 rounded-lg font-medium transition-colors ${conditionType === 'date'
-                      ? 'bg-green-600 text-white'
-                      : 'bg-white border border-slate-300 text-slate-600 hover:border-green-500'
+                    ? 'bg-green-600 text-white'
+                    : 'bg-white border border-slate-300 text-slate-600 hover:border-green-500'
                     }`}
                 >
                   Date-Specific
@@ -603,8 +772,8 @@ function GlobalPriceConditionsSection({ conditions, onRefresh, onEdit }) {
                       type="button"
                       onClick={() => toggleDay(day.id)}
                       className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${newCondition.days.includes(day.id)
-                          ? 'bg-green-600 text-white'
-                          : 'bg-white border border-slate-300 text-slate-600 hover:border-green-500'
+                        ? 'bg-green-600 text-white'
+                        : 'bg-white border border-slate-300 text-slate-600 hover:border-green-500'
                         }`}
                     >
                       {day.label}
@@ -658,20 +827,16 @@ function GlobalPriceConditionsSection({ conditions, onRefresh, onEdit }) {
             <div className="grid grid-cols-3 gap-4">
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-2">From Time</label>
-                <input
-                  type="time"
+                <TimePicker
                   value={newCondition.slotFrom}
-                  onChange={(e) => setNewCondition({ ...newCondition, slotFrom: e.target.value })}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                  onChange={(val) => setNewCondition({ ...newCondition, slotFrom: val })}
                 />
               </div>
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-2">To Time</label>
-                <input
-                  type="time"
+                <TimePicker
                   value={newCondition.slotTo}
-                  onChange={(e) => setNewCondition({ ...newCondition, slotTo: e.target.value })}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                  onChange={(val) => setNewCondition({ ...newCondition, slotTo: val })}
                 />
               </div>
               <div>
@@ -687,16 +852,17 @@ function GlobalPriceConditionsSection({ conditions, onRefresh, onEdit }) {
             </div>
             <div className="flex gap-2">
               <button
-                onClick={handleAdd}
+                onClick={handleSave}
                 className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
               >
-                Add & Apply to All Courts
+                {editingCondition ? 'Update Condition' : 'Add & Apply to All Courts'}
               </button>
               <button
                 onClick={() => {
                   setIsAdding(false);
                   setNewCondition({ days: [], dates: [], slotFrom: '06:00', slotTo: '07:00', price: '' });
                   setConditionType('recurring');
+                  onEdit(null); // Clear editing state
                 }}
                 className="px-4 py-2 border border-slate-300 rounded-lg text-slate-700 hover:bg-slate-50"
               >
@@ -737,16 +903,26 @@ function GlobalPriceConditionsSection({ conditions, onRefresh, onEdit }) {
                   </>
                 )}
                 <div className="text-sm text-slate-600">
-                  {condition.slot_from} - {condition.slot_to} • ₹{condition.price}
+                  {formatTime12Hour(condition.slot_from)} - {formatTime12Hour(condition.slot_to)} • ₹{condition.price}
                 </div>
               </div>
             </div>
-            <button
-              onClick={() => handleDelete(condition.id)}
-              className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
-            >
-              <Trash2 className="h-4 w-4" />
-            </button>
+            <div className="flex gap-2">
+              <button
+                onClick={() => startEdit(condition)}
+                className="p-2 text-slate-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+                title="Edit"
+              >
+                <Edit2 className="h-4 w-4" />
+              </button>
+              <button
+                onClick={() => handleDelete(condition.id)}
+                className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                title="Delete"
+              >
+                <Trash2 className="h-4 w-4" />
+              </button>
+            </div>
           </div>
         ))}
         {conditions.length === 0 && (

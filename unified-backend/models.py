@@ -278,8 +278,8 @@ class Booking(Base):
     court_id = Column(UUID(as_uuid=True), nullable=False)
     booking_date = Column(Date, nullable=False)
     # Updated Columns for Multi-Slot Support
-    time_slots = Column(JSON, nullable=False) # Stores array of {start, end, price}
-    total_duration_minutes = Column(Integer, nullable=False)
+    time_slots = Column(JSON, nullable=True) # Stores array of {start, end, price}
+    total_duration_minutes = Column(Integer, nullable=True)
     
     # Amount Breakdown
     original_amount = Column(DECIMAL(10, 2), nullable=False)
@@ -296,12 +296,18 @@ class Booking(Base):
     
     # Deprecated/Renamed Columns (Mapped to new DB names)
     # Using quoted names to map to the actual DB column name
-    start_time = Column("_deprecated_start_time", Time, nullable=True)
-    end_time = Column("_deprecated_end_time", Time, nullable=True)
-    duration_minutes = Column("_deprecated_duration_minutes", Integer, nullable=True)
-    price_per_hour = Column("_deprecated_price_per_hour", DECIMAL(10, 2), nullable=True)
-    original_price_per_hour = Column("_deprecated_original_price_per_hour", DECIMAL(10, 2), nullable=True)
+    start_time = Column("_deprecated_start_time_v2", Time, nullable=True)
+    end_time = Column("_deprecated_end_time_v2", Time, nullable=True)
+    duration_minutes = Column("_deprecated_duration_minutes_v2", Integer, nullable=True)
+    price_per_hour = Column("_deprecated_price_per_hour_v2", DECIMAL(10, 2), nullable=True)
+    original_price_per_hour = Column("_deprecated_original_price_per_hour_v2", DECIMAL(10, 2), nullable=True)
     coupon_discount = Column("_deprecated_coupon_discount", DECIMAL(10, 2), default=0)
+    
+    # Even older deprecated columns (without _v2 suffix) - these have NOT NULL constraints
+    _old_start_time = Column("_deprecated_start_time", Time, nullable=False)
+    _old_end_time = Column("_deprecated_end_time", Time, nullable=False)
+    _old_duration_minutes = Column("_deprecated_duration_minutes", Integer, nullable=False)
+    _old_price_per_hour = Column("_deprecated_price_per_hour", DECIMAL(10, 2), nullable=False)
 
     total_amount = Column(DECIMAL(10, 2), nullable=False)
     number_of_players = Column(Integer, default=2)

@@ -417,15 +417,18 @@ class ProfileResponse(ProfileBase):
 
 class BookingCreate(BaseModel):
     """User booking creation from mobile app"""
+    user_id: Optional[str] = None  # Optional for admin-created bookings
     court_id: str
     booking_date: date
     start_time: str  # AM/PM format supported (Legacy/Single slot)
+    end_time: Optional[str] = None # Added for legacy support
     duration_minutes: int
     number_of_players: int = 2
     price_per_hour: float = 200.0
     original_price_per_hour: Optional[float] = None
     team_name: Optional[str] = None
     special_requests: Optional[str] = None
+    total_amount: Optional[float] = None # Allow frontend to specify total
     # New Multi-slot fields
     time_slots: Optional[List[dict]] = None
     original_amount: Optional[float] = None
@@ -522,8 +525,8 @@ class AdminBooking(BaseModel):
     booking_reference: str
     booking_date: date
     # Updated fields
-    time_slots: List[dict]
-    total_duration_minutes: int  # replacing duration_hours
+    time_slots: Optional[List[dict]] = []
+    total_duration_minutes: Optional[int] = 0  # replacing duration_hours
     total_amount: Decimal
     original_amount: Decimal
     discount_amount: Decimal

@@ -26,14 +26,15 @@ export const getApiBaseUrl = (): string => {
   const isDevelopment = __DEV__;
 
   if (isDevelopment) {
-    // Using computer's local IP for physical device testing
-    // This matches the Metro bundler IP: 192.168.1.5
-    return 'http://192.168.1.5:8000/api/user';
+    // For Android Emulator: 10.0.2.2 maps to host's localhost
+    // For iOS Simulator: localhost works  
+    // For Physical Device: use your computer's local IP (e.g., 192.168.1.5)
+    return 'http://10.0.2.2:8000/api/user';
   }
 
   // Production fallback - hosted backend
   console.warn('⚠️ API_BASE_URL not set in environment variables. Using hosted backend.');
-  return 'http://localhost:8000/api/user';
+  return 'http://192.168.1.5:8000/api/user';
 };
 
 /**

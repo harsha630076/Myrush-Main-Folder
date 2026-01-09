@@ -132,7 +132,9 @@ async def create_global_condition(
 @router.put("/{condition_id}", response_model=dict)
 def update_global_condition(
     condition_id: str,
-    days: Optional[str] = None,
+    condition_type: Optional[str] = Form(None),
+    days: Optional[str] = Form(None),
+    dates: Optional[str] = Form(None),
     slot_from: Optional[str] = None,
     slot_to: Optional[str] = None,
     price: Optional[str] = None,
@@ -147,12 +149,23 @@ def update_global_condition(
     if not db_condition:
         raise HTTPException(status_code=404, detail="Global condition not found")
     
+    
+    if condition_type is not None:
+        db_condition.condition_type = condition_type
+    
     if days is not None:
         try:
             days_list = json.loads(days) if isinstance(days, str) else days
             db_condition.days = days_list
         except:
             raise HTTPException(status_code=400, detail="Invalid days format")
+    
+    if dates is not None:
+        try:
+            dates_list = json.loads(dates) if isinstance(dates, str) else dates
+            db_condition.dates = dates_list
+        except:
+            raise HTTPException(status_code=400, detail="Invalid dates format")
     
     if slot_from is not None:
         db_condition.slot_from = slot_from
@@ -172,7 +185,9 @@ def update_global_condition(
     
     return {
         "id": str(db_condition.id),
+        "condition_type": db_condition.condition_type or 'recurring',
         "days": db_condition.days or [],
+        "dates": db_condition.dates or [],
         "slot_from": db_condition.slot_from,
         "slot_to": db_condition.slot_to,
         "price": float(db_condition.price),

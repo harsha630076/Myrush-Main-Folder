@@ -1,5 +1,6 @@
 import config from '../config';
 const API_BASE = config.API_URL;
+export const IMAGE_BASE_URL = API_BASE.replace('/api/admin', '');
 
 async function apiRequest(url, options = {}) {
     const config = {
@@ -15,7 +16,7 @@ async function apiRequest(url, options = {}) {
 
         if (!response.ok) {
             const errorData = await response.json().catch(() => ({}));
-            throw new Error(errorData.error || errorData.detail || `API Error: ${response.status} ${response.statusText}`);
+            throw new Error(errorData.error || (typeof errorData.detail === 'object' ? JSON.stringify(errorData.detail) : errorData.detail) || `API Error: ${response.status} ${response.statusText}`);
         }
 
         return response.json();
@@ -252,7 +253,9 @@ export const globalPriceConditionsApi = {
     },
     update: (id, data) => {
         const formData = new FormData();
+        if (data.condition_type !== undefined) formData.append('condition_type', data.condition_type);
         if (data.days !== undefined) formData.append('days', JSON.stringify(data.days));
+        if (data.dates !== undefined) formData.append('dates', JSON.stringify(data.dates));
         if (data.slot_from !== undefined) formData.append('slot_from', data.slot_from);
         if (data.slot_to !== undefined) formData.append('slot_to', data.slot_to);
         if (data.price !== undefined) formData.append('price', data.price);

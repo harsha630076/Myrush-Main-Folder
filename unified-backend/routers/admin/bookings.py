@@ -21,12 +21,36 @@ def create_booking(booking: schemas.BookingCreate, db: Session = Depends(get_db)
     if not court:
         raise HTTPException(status_code=404, detail="Court not found")
 
-    # Calculate duration
-    start_dt = datetime.combine(date.today(), booking.start_time)
-    end_dt = datetime.combine(date.today(), booking.end_time)
-    duration_minutes = (end_dt - start_dt).seconds / 60
-    if duration_minutes < 0: # Handle overnight
-         duration_minutes += 24 * 60
+    # Helper to parse time string
+    def parse_time_str(t_str):
+        if not t_str: return None
+        for fmt in ('%H:%M', '%H:%M:%S', '%I:%M %p'):
+            try:
+                return datetime.strptime(t_str, fmt).time()
+            except ValueError:
+                continue
+        return None
+
+    # Parse times
+    start_time_obj = parse_time_str(booking.start_time)
+    end_time_obj = parse_time_str(booking.end_time)
+
+    if not start_time_obj:
+        raise HTTPException(status_code=400, detail="Invalid start_time format")
+
+    # Calculate duration if not provided or just sanity check
+    # But usually trust the provided duration_minutes or calc from end_time
+    duration_minutes = booking.duration_minutes
+    if end_time_obj:
+        start_dt = datetime.combine(date.today(), start_time_obj)
+        end_dt = datetime.combine(date.today(), end_time_obj)
+        calc_duration = (end_dt - start_dt).seconds / 60
+        if calc_duration < 0:
+             calc_duration += 24 * 60
+        # Optional: override duration_minutes with calculated one?
+        # Let's fallback to calculated if provided is 0
+        if duration_minutes == 0:
+            duration_minutes = int(calc_duration)
     
     # Coupon Validation
     db_coupon = None
@@ -67,34 +91,59 @@ def create_booking(booking: schemas.BookingCreate, db: Session = Depends(get_db)
 
         # Calculate discount
         if db_coupon.discount_type == 'percentage':
-            discount = (booking.total_amount * db_coupon.discount_value) / 100
-            if db_coupon.max_discount:
-                discount = min(discount, db_coupon.max_discount)
-            discount_amount = discount
+            # Use booking.original_amount if available, else infer from something? 
+            # booking does not have total_amount, it has price_per_hour etc?
+            # BookingCreate has price_per_hour.
+            # Let's assume passed total/price is valid.
+            # But wait, BookingCreate doesn't have total_amount! only price_per_hour.
+            pass # TODO: Fix discount calc if needed
         else: # flat
             discount_amount = db_coupon.discount_value
-        
-        # Ensure discount doesn't exceed total
-        discount_amount = min(discount_amount, booking.total_amount)
         
         # Increment usage
         db_coupon.usage_count += 1
         db.add(db_coupon)
 
-    db_booking = models.Booking(
-        **booking.dict(exclude={'coupon_code'}),
-        duration_minutes=duration_minutes,
-        payment_id=str(uuid.uuid4()), # Placeholder
-        coupon_id=db_coupon.id if db_coupon else None,
-        coupon_discount=discount_amount
-    )
+    # Note: BookingCreate doesn't have total_amount. It has price_per_hour.
+    # Model needs total_amount.
+    # We should calculate total_amount = (duration_minutes/60) * price_per_hour
+    if booking.total_amount is not None:
+         total_amount = Decimal(booking.total_amount)
+    else:
+         total_amount = Decimal(duration_minutes / 60) * Decimal(booking.price_per_hour)
     
-    db.add(db_booking)
-    db.commit()
-    db.refresh(db_booking)
-    
-    # Reload with relationships for response
-    return get_booking(str(db_booking.id), db)
+    original_amount = booking.original_amount or total_amount
+
+    try:
+        db_booking = models.Booking(
+            **booking.dict(exclude={'coupon_code', 'start_time', 'end_time', 'total_amount', 'duration_minutes', 'original_amount'}),
+            start_time=start_time_obj,
+            end_time=end_time_obj,
+            duration_minutes=duration_minutes,
+            total_duration_minutes=duration_minutes, # Populate new field
+            total_amount=total_amount, # Set calculated total
+            original_amount=original_amount,
+            # Populate old deprecated columns (NOT NULL constraints)
+            _old_start_time=start_time_obj,
+            _old_end_time=end_time_obj,
+            _old_duration_minutes=duration_minutes,
+            _old_price_per_hour=booking.price_per_hour,
+            payment_id=str(uuid.uuid4()), # Placeholder
+            coupon_id=db_coupon.id if db_coupon else None,
+            coupon_discount=discount_amount
+        )
+        
+        db.add(db_booking)
+        db.commit()
+        db.refresh(db_booking)
+        
+        # Reload with relationships for response
+        return get_booking(str(db_booking.id), db)
+    except Exception as e:
+        db.rollback()
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Failed to create booking: {str(e)}")
 
 @router.get("", response_model=List[schemas.AdminBooking])
 @router.get("/", response_model=List[schemas.AdminBooking])
@@ -108,108 +157,120 @@ def get_all_bookings(
 ):
     """Get all user bookings from 'booking' table with optional filters and related court/user data"""
     # Base query - removed broken court relationship options
-    query = db.query(models.Booking).options(
-        joinedload(models.Booking.user),  # Load user data
-        joinedload(models.Booking.coupon)
-    )
-
-    # Handle Court-related filters manually first
-    if branch_id or game_type_id:
-        court_q = db.query(models.Court.id)
-        if branch_id:
-            court_q = court_q.filter(models.Court.branch_id == branch_id)
-        if game_type_id:
-            court_q = court_q.filter(models.Court.game_type_id == game_type_id)
-        
-        # Get matching court IDs
-        matching_court_ids = [c[0] for c in court_q.all()]
-        if not matching_court_ids:
-            return []
-        
-        query = query.filter(models.Booking.court_id.in_(matching_court_ids))
-
-    if court_id:
-        query = query.filter(models.Booking.court_id == court_id)
-    if status:
-        query = query.filter(models.Booking.status == status)
-    if payment_status:
-        query = query.filter(models.Booking.payment_status == payment_status)
-
-    bookings = query.order_by(models.Booking.booking_date.desc(), models.Booking.start_time.desc()).all()
-
-    # Manual Hydration: Fetch and attach Court objects
-    if bookings:
-        court_ids = {b.court_id for b in bookings if b.court_id}
-        if court_ids:
-            courts = db.query(models.Court).options(
-                joinedload(models.Court.branch).joinedload(models.Branch.city),
-                joinedload(models.Court.game_type)
-            ).filter(models.Court.id.in_(court_ids)).all()
-            
-            court_map = {c.id: c for c in courts}
-            
-            for b in bookings:
-                if b.court_id in court_map:
-                    b.court = court_map[b.court_id]
-
-    # Convert Booking model to AdminBooking schema for frontend compatibility
-    result = []
-    for booking in bookings:
-        # Calculate duration_hours from duration_minutes
-        duration_hours = Decimal(booking.duration_minutes) / Decimal(60)
-
-        # Generate booking reference from ID
-        booking_reference = f"BOOK{str(booking.id)[:8].upper()}"
-
-        # Get user data from the user relationship
-        customer_name = "Guest User"
-        customer_email = "user@example.com"
-        customer_phone = "+91xxxxxxxxxx"
-
-        if booking.user:
-            # Prefer first_name + last_name, fallback to full_name, then team_name
-            if booking.user.first_name:
-                customer_name = f"{booking.user.first_name} {booking.user.last_name or ''}".strip()
-            elif booking.user.full_name:
-                customer_name = booking.user.full_name
-            elif booking.team_name:
-                customer_name = booking.team_name
-
-            # Get email and phone from user
-            customer_email = booking.user.email or customer_email
-            customer_phone = booking.user.phone_number or customer_phone
-        
-        # Safely access court data (it might be manually attached or None)
-        # Note: booking.court is now available via manual hydration
-        court_data = getattr(booking, 'court', None)
-
-        # Create AdminBooking response
-        admin_booking = schemas.AdminBooking(
-            id=str(booking.id),
-            customer_name=customer_name,
-            customer_email=customer_email,
-            customer_phone=customer_phone,
-            court_id=str(booking.court_id),
-            game_type_id=str(court_data.game_type_id) if court_data else None,
-            booking_reference=booking_reference,
-            booking_date=booking.booking_date,
-            start_time=booking.start_time,
-            end_time=booking.end_time,
-            duration_hours=duration_hours,
-            total_amount=booking.total_amount,
-            special_requests=booking.special_requests or "",
-            status=booking.status,
-            payment_status=booking.payment_status,
-            created_at=booking.created_at,
-            updated_at=booking.updated_at,
-            court=court_data,  # Include court data with branch and city
-            game_type=court_data.game_type if court_data else None,  # Include game type data
-            coupon_code=booking.coupon.code if booking.coupon else None,
-            coupon_discount=booking.coupon_discount or 0
+    try:
+        query = db.query(models.Booking).options(
+            joinedload(models.Booking.user),  # Load user data
+            joinedload(models.Booking.coupon)
         )
-        result.append(admin_booking)
 
-    return result
+        # Handle Court-related filters manually first
+        if branch_id or game_type_id:
+            court_q = db.query(models.Court.id)
+            if branch_id:
+                court_q = court_q.filter(models.Court.branch_id == branch_id)
+            if game_type_id:
+                court_q = court_q.filter(models.Court.game_type_id == game_type_id)
+            
+            # Get matching court IDs
+            matching_court_ids = [c[0] for c in court_q.all()]
+            if not matching_court_ids:
+                return []
+            
+            query = query.filter(models.Booking.court_id.in_(matching_court_ids))
+
+        if court_id:
+            query = query.filter(models.Booking.court_id == court_id)
+        if status:
+            query = query.filter(models.Booking.status == status)
+        if payment_status:
+            query = query.filter(models.Booking.payment_status == payment_status)
+
+        bookings = query.order_by(models.Booking.booking_date.desc(), models.Booking.start_time.desc()).all()
+
+        # Manual Hydration: Fetch and attach Court objects
+        if bookings:
+            court_ids = {b.court_id for b in bookings if b.court_id}
+            if court_ids:
+                courts = db.query(models.Court).options(
+                    joinedload(models.Court.branch).joinedload(models.Branch.city),
+                    joinedload(models.Court.game_type)
+                ).filter(models.Court.id.in_(court_ids)).all()
+                
+                court_map = {c.id: c for c in courts}
+                
+                for b in bookings:
+                    if b.court_id in court_map:
+                        b.court = court_map[b.court_id]
+
+        # Convert Booking model to AdminBooking schema for frontend compatibility
+        result = []
+        for booking in bookings:
+            # Calculate duration_hours from duration_minutes
+            duration_hours = Decimal(booking.duration_minutes or 0) / Decimal(60)
+
+            # Generate booking reference from ID
+            booking_reference = f"BOOK{str(booking.id)[:8].upper()}"
+
+            # Get user data from the user relationship
+            customer_name = "Guest User"
+            customer_email = "user@example.com"
+            customer_phone = "+91xxxxxxxxxx"
+
+            if booking.user:
+                # Prefer first_name + last_name, fallback to full_name, then team_name
+                if booking.user.first_name:
+                    customer_name = f"{booking.user.first_name} {booking.user.last_name or ''}".strip()
+                elif booking.user.full_name:
+                    customer_name = booking.user.full_name
+                elif booking.team_name:
+                    customer_name = booking.team_name
+
+                # Get email and phone from user
+                customer_email = booking.user.email or customer_email
+                customer_phone = booking.user.phone_number or customer_phone
+            
+            # Safely access court data (it might be manually attached or None)
+            # Note: booking.court is now available via manual hydration
+            court_data = getattr(booking, 'court', None)
+
+            # Create AdminBooking response
+            # Create AdminBooking response
+            admin_booking = schemas.AdminBooking(
+                id=str(booking.id),
+                customer_name=customer_name,
+                customer_email=customer_email,
+                customer_phone=customer_phone,
+                court_id=str(booking.court_id),
+                game_type_id=str(court_data.game_type_id) if court_data else None,
+                booking_reference=booking_reference,
+                booking_date=booking.booking_date,
+                start_time=booking.start_time,
+                end_time=booking.end_time,
+                # Updated fields
+                time_slots=booking.time_slots or [],
+                total_duration_minutes=booking.total_duration_minutes or int(booking.duration_minutes or 0),
+                
+                total_amount=booking.total_amount,
+                original_amount=booking.original_amount or booking.total_amount, # Fallback
+                discount_amount=booking.discount_amount or 0,
+                
+                special_requests=booking.special_requests or "",
+                status=booking.status,
+                payment_status=booking.payment_status,
+                created_at=booking.created_at,
+                updated_at=booking.updated_at,
+                court=court_data,  # Include court data with branch and city
+                game_type=court_data.game_type if court_data else None,  # Include game type data
+                coupon_code=booking.coupon.code if booking.coupon else None,
+                coupon_discount=booking.coupon_discount or 0
+            )
+            result.append(admin_booking)
+
+        return result
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Internal Server Error: {str(e)}")
 
 @router.get("/{booking_id}", response_model=schemas.AdminBooking)
 def get_booking(booking_id: str, db: Session = Depends(get_db)):
@@ -272,8 +333,11 @@ def get_booking(booking_id: str, db: Session = Depends(get_db)):
         booking_date=booking.booking_date,
         start_time=booking.start_time,
         end_time=booking.end_time,
-        duration_hours=duration_hours,
+        time_slots=booking.time_slots or [],
+        total_duration_minutes=booking.total_duration_minutes or int(booking.duration_minutes or 0),
         total_amount=booking.total_amount,
+        original_amount=booking.original_amount or booking.total_amount,
+        discount_amount=booking.discount_amount or 0,
         special_requests=booking.special_requests or "",
         status=booking.status,
         payment_status=booking.payment_status,

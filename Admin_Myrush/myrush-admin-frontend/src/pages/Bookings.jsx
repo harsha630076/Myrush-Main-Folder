@@ -4,6 +4,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import Layout from '../components/Layout';
 import ToggleSwitch from '../components/settings/ToggleSwitch';
 import BookingPolicies from '../components/settings/BookingPolicies';
+import AddBookingForm from '../components/bookings/AddBookingForm';
 import { citiesApi, branchesApi, courtsApi, gameTypesApi, bookingsApi } from '../services/adminApi';
 
 function Bookings() {
@@ -328,8 +329,21 @@ function Bookings() {
                                                 Schedule
                                             </h4>
                                             <p className="text-sm text-slate-900">{booking.booking_date}</p>
-                                            <p className="text-xs text-slate-500">{booking.start_time} - {booking.end_time}</p>
-                                            <p className="text-xs text-slate-500">{booking.duration_hours} hours</p>
+                                            {booking.time_slots && booking.time_slots.length > 0 ? (
+                                                <>
+                                                    <p className="text-xs text-slate-500">
+                                                        {booking.time_slots[0].start} - {booking.time_slots[booking.time_slots.length - 1].end}
+                                                    </p>
+                                                    <p className="text-xs text-slate-500">
+                                                        {booking.total_duration_minutes ? `${booking.total_duration_minutes / 60} hours` : `${booking.duration_hours} hours`}
+                                                    </p>
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <p className="text-xs text-slate-500">{booking.start_time} - {booking.end_time}</p>
+                                                    <p className="text-xs text-slate-500">{booking.duration_hours} hours</p>
+                                                </>
+                                            )}
                                         </div>
 
                                         {/* Payment & Actions */}
@@ -416,6 +430,12 @@ function Bookings() {
 
             {activeTab === 'policies' && (
                 <BookingPolicies />
+            )}
+            {showForm && (
+                <AddBookingForm
+                    onClose={() => setShowForm(false)}
+                    onBookingAdded={fetchAllData}
+                />
             )}
         </Layout>
     );

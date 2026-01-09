@@ -36,6 +36,7 @@ function AddAmenityForm({ onCancel, onSave, initialData = null }) {
                 }
             }));
         }
+        e.target.value = '';
     };
 
     const removeIcon = () => {

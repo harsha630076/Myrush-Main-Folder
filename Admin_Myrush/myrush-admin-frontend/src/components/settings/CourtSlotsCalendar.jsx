@@ -3,6 +3,16 @@ import { Calendar, ChevronLeft, ChevronRight, Clock, DollarSign, Save, X, Users,
 import { courtsApi, branchesApi, citiesApi } from '../../services/adminApi';
 import Layout from '../Layout';
 
+// Helper function to format time from 24-hour to 12-hour with AM/PM
+function formatTime12Hour(time24) {
+  if (!time24) return '';
+  const [hours, minutes] = time24.split(':');
+  let h = parseInt(hours, 10);
+  const ampm = h >= 12 ? 'PM' : 'AM';
+  h = h % 12 || 12;
+  return `${h}:${minutes} ${ampm}`;
+}
+
 function CourtSlotsCalendar() {
   const [courts, setCourts] = useState([]);
   const [branches, setBranches] = useState([]);
@@ -18,6 +28,7 @@ function CourtSlotsCalendar() {
   const [selectedBranchId, setSelectedBranchId] = useState('');
   const [bulkEditMode, setBulkEditMode] = useState(false); // New: Bulk edit mode
   const [masterSlots, setMasterSlots] = useState({}); // Aggregated slots from all courts
+  const [expandedDates, setExpandedDates] = useState({}); // Track which dates have expanded slot views
 
   useEffect(() => {
     fetchData();
@@ -72,7 +83,7 @@ function CourtSlotsCalendar() {
       const date = new Date(year, month, day);
       const dayOfWeek = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'][date.getDay()];
       const dateKey = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-      
+
       const aggregatedSlots = {};
 
       // Process each court's slots
@@ -87,12 +98,12 @@ function CourtSlotsCalendar() {
         }
 
         // Find recurring slots for this day
-        const recurringSlots = priceConditions.filter(pc => 
+        const recurringSlots = priceConditions.filter(pc =>
           pc.days && pc.days.includes(dayOfWeek)
         );
 
         // Find date-specific slots for this date
-        const dateSpecificSlots = priceConditions.filter(pc => 
+        const dateSpecificSlots = priceConditions.filter(pc =>
           pc.dates && pc.dates.includes(dateKey)
         );
 
@@ -130,7 +141,7 @@ function CourtSlotsCalendar() {
 
   const loadCourtSlots = () => {
     if (!selectedCourt) return;
-    
+
     // Parse price_conditions from the court
     let priceConditions = selectedCourt.price_conditions || [];
     if (typeof priceConditions === 'string') {
@@ -155,14 +166,14 @@ function CourtSlotsCalendar() {
       const date = new Date(year, month, day);
       const dayOfWeek = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'][date.getDay()];
       const dateKey = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-      
+
       // Find recurring slots that apply to this day of week
-      const recurringDaySlots = recurringSlots.filter(pc => 
+      const recurringDaySlots = recurringSlots.filter(pc =>
         pc.days && pc.days.includes(dayOfWeek)
       );
 
       // Find date-specific slots that apply to this exact date
-      const dateSpecificDaySlots = dateSpecificSlots.filter(pc => 
+      const dateSpecificDaySlots = dateSpecificSlots.filter(pc =>
         pc.dates && pc.dates.includes(dateKey)
       );
 
@@ -189,9 +200,9 @@ function CourtSlotsCalendar() {
     const startingDayOfWeek = firstDay.getDay();
 
     const days = [];
-    
+
     // Add empty cells for days before the first day of the month
-    for (let i = 0; i <startingDayOfWeek; i++) {
+    for (let i = 0; i < startingDayOfWeek; i++) {
       days.push(null);
     }
 
@@ -219,11 +230,11 @@ function CourtSlotsCalendar() {
     setEditedSlots(prev => {
       const newSlots = { ...prev };
       if (!newSlots[dateKey]) newSlots[dateKey] = [];
-      
+
       newSlots[dateKey] = newSlots[dateKey].map(slot =>
         slot.id === slotId ? { ...slot, [field]: value } : slot
       );
-      
+
       return newSlots;
     });
   };
@@ -232,12 +243,12 @@ function CourtSlotsCalendar() {
     setEditedSlots(prev => {
       const newSlots = { ...prev };
       if (!newSlots[dateKey]) newSlots[dateKey] = [];
-      
+
       // Get default price from first court or use empty
-      const defaultPrice = bulkEditMode 
+      const defaultPrice = bulkEditMode
         ? (courts.length > 0 ? courts[0].price_per_hour : '')
         : (selectedCourt?.price_per_hour || selectedCourt?.default_price || '');
-      
+
       const newSlot = {
         id: `${dateKey}-${Date.now()}`,
         days: [],
@@ -245,7 +256,7 @@ function CourtSlotsCalendar() {
         slotTo: '10:00',
         price: defaultPrice
       };
-      
+
       newSlots[dateKey] = [...newSlots[dateKey], newSlot];
       return newSlots;
     });
@@ -269,7 +280,7 @@ function CourtSlotsCalendar() {
       const daySlots = editedSlots[dateKey] || [];
 
       // Update each slot for the selected date across all courts
-      const updatePromises = daySlots.map(slot => 
+      const updatePromises = daySlots.map(slot =>
         courtsApi.bulkUpdateSlots(
           dateKey,
           slot.slotFrom,
@@ -281,12 +292,12 @@ function CourtSlotsCalendar() {
       );
 
       await Promise.all(updatePromises);
-      
+
       // Refresh data
       await fetchData();
       loadMasterSlots();
       setIsEditing(false);
-      
+
       alert(`Successfully updated slots for ${daySlots.length} time slot(s) across all courts!`);
     } catch (err) {
       console.error('Error saving bulk slots:', err);
@@ -307,14 +318,14 @@ function CourtSlotsCalendar() {
       // Separate recurring (day-based) and date-specific slots
       const recurringSlotMap = {};
       const dateSpecificSlotMap = {};
-      
+
       Object.keys(editedSlots).forEach(dateKey => {
         const date = new Date(dateKey);
         const dayOfWeek = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'][date.getDay()];
-        
+
         editedSlots[dateKey].forEach(slot => {
           const slotKey = `${slot.slotFrom}-${slot.slotTo}-${slot.price}`;
-          
+
           // If it's a date-specific slot (was originally date-specific or newly added for specific date)
           if (slot.isDateSpecific || slot.dates) {
             if (!dateSpecificSlotMap[slotKey]) {
@@ -362,19 +373,19 @@ function CourtSlotsCalendar() {
       formData.append('price_per_hour', selectedCourt.price_per_hour);
       formData.append('is_active', selectedCourt.is_active);
       formData.append('price_conditions', JSON.stringify(priceConditions));
-      
+
       if (selectedCourt.unavailability_slots) {
         formData.append('unavailability_slots', JSON.stringify(selectedCourt.unavailability_slots));
       }
 
       await courtsApi.update(selectedCourt.id, formData);
-      
+
       // Refresh court data
       const updatedCourt = await courtsApi.getById(selectedCourt.id);
       setSelectedCourt(updatedCourt);
       setIsEditing(false);
       loadCourtSlots();
-      
+
       alert('Slots updated successfully!');
     } catch (err) {
       console.error('Error saving slots:', err);
@@ -391,11 +402,11 @@ function CourtSlotsCalendar() {
   }
 
   const displaySlots = bulkEditMode ? masterSlots : slots;
-  
+
   const filteredBranches = selectedCityId
     ? branches.filter(branch => branch.city_id === selectedCityId)
     : branches;
-  
+
   const filteredCourts = courts.filter(court => {
     if (!court.is_active) return false;
     const branchMatch = selectedBranchId ? court.branch_id === selectedBranchId : true;
@@ -416,8 +427,8 @@ function CourtSlotsCalendar() {
               Court Slots Calendar
             </h1>
             <p className="mt-1 text-slate-500">
-              {bulkEditMode 
-                ? 'Bulk Edit Mode: Changes apply to ALL courts' 
+              {bulkEditMode
+                ? 'Bulk Edit Mode: Changes apply to ALL courts'
                 : 'Manage slots, timings, and prices for individual courts'}
             </p>
           </div>
@@ -613,11 +624,9 @@ function CourtSlotsCalendar() {
                 return (
                   <div
                     key={dateKey}
-                    className={`aspect-square border rounded-lg p-2 ${
-                      isToday ? 'border-green-500 bg-green-50' : 'border-slate-200'
-                    } ${isSelected ? 'ring-2 ring-green-500' : ''} ${
-                      isEditing ? 'hover:border-green-400 cursor-pointer' : ''
-                    } transition-colors`}
+                    className={`aspect-square border rounded-lg p-2 ${isToday ? 'border-green-500 bg-green-50' : 'border-slate-200'
+                      } ${isSelected ? 'ring-2 ring-green-500' : ''} ${isEditing ? 'hover:border-green-400 cursor-pointer' : ''
+                      } transition-colors`}
                     onClick={() => isEditing && setSelectedDate(date)}
                   >
                     <div className="text-sm font-medium text-slate-700 mb-1">
@@ -627,22 +636,44 @@ function CourtSlotsCalendar() {
                       {daySlots.slice(0, 2).map(slot => (
                         <div
                           key={slot.id}
-                          className={`text-xs rounded px-1 py-0.5 truncate ${
-                            bulkEditMode
+                          className={`text-xs rounded px-1 py-0.5 truncate ${bulkEditMode
                               ? 'bg-purple-100 text-purple-800'
                               : slot.isDateSpecific
-                              ? 'bg-blue-100 text-blue-800'
-                              : 'bg-green-100 text-green-800'
-                          }`}
+                                ? 'bg-blue-100 text-blue-800'
+                                : 'bg-green-100 text-green-800'
+                            }`}
                           title={`${slot.slotFrom} - ${slot.slotTo}: ₹${slot.price} ${bulkEditMode ? `(${slot.courtCount || 'all'} courts)` : slot.isDateSpecific ? '(Date-specific)' : '(Recurring)'}`}
                         >
                           <Clock className="h-2 w-2 inline mr-1" />
-                          {slot.slotFrom} - {slot.slotTo}
+                          {formatTime12Hour(slot.slotFrom)} - {formatTime12Hour(slot.slotTo)}
                         </div>
                       ))}
                       {daySlots.length > 2 && (
-                        <div className="text-xs text-slate-500">+{daySlots.length - 2} more</div>
+                        <div
+                          className="text-xs text-blue-600 hover:text-blue-800 cursor-pointer font-medium"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setExpandedDates(prev => ({ ...prev, [dateKey]: !prev[dateKey] }));
+                          }}
+                        >
+                          {expandedDates[dateKey] ? 'Show less' : `+${daySlots.length - 2} more`}
+                        </div>
                       )}
+                      {expandedDates[dateKey] && daySlots.slice(2).map(slot => (
+                        <div
+                          key={slot.id}
+                          className={`text-xs rounded px-1 py-0.5 truncate ${bulkEditMode
+                              ? 'bg-purple-100 text-purple-800'
+                              : slot.isDateSpecific
+                                ? 'bg-blue-100 text-blue-800'
+                                : 'bg-green-100 text-green-800'
+                            }`}
+                          title={`${slot.slotFrom} - ${slot.slotTo}: ₹${slot.price} ${bulkEditMode ? `(${slot.courtCount || 'all'} courts)` : slot.isDateSpecific ? '(Date-specific)' : '(Recurring)'}`}
+                        >
+                          <Clock className="h-2 w-2 inline mr-1" />
+                          {formatTime12Hour(slot.slotFrom)} - {formatTime12Hour(slot.slotTo)}
+                        </div>
+                      ))}
                       {daySlots.length === 0 && (
                         <div className="text-xs text-slate-400">No slots</div>
                       )}
@@ -657,11 +688,11 @@ function CourtSlotsCalendar() {
               <div className="mt-6 p-4 bg-slate-50 rounded-lg border border-slate-200">
                 <div className="flex items-center justify-between mb-4">
                   <h4 className="font-semibold text-slate-900">
-                    Slots for {selectedDate.toLocaleDateString('en-US', { 
-                      weekday: 'long', 
-                      year: 'numeric', 
-                      month: 'long', 
-                      day: 'numeric' 
+                    Slots for {selectedDate.toLocaleDateString('en-US', {
+                      weekday: 'long',
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric'
                     })}
                   </h4>
                   <button

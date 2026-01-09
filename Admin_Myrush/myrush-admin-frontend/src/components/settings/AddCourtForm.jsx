@@ -87,9 +87,6 @@ function AddCourtForm({ onCancel, onSuccess, initialData = null }) {
             priceConditions: priceConditions,
             unavailabilitySlots: unavailabilitySlots,
             termsAndConditions: initialData.terms_and_conditions || '',
-            priceConditions: priceConditions,
-            unavailabilitySlots: unavailabilitySlots,
-            termsAndConditions: initialData.terms_and_conditions || '',
             amenities: initialData.amenities || [],
             isActive: initialData.is_active
           });
@@ -111,6 +108,7 @@ function AddCourtForm({ onCancel, onSuccess, initialData = null }) {
       url: URL.createObjectURL(file)
     }));
     setFormData(prev => ({ ...prev, images: [...prev.images, ...newImages] }));
+    e.target.value = '';
   };
 
   const handleVideoUpload = (e) => {
@@ -120,6 +118,7 @@ function AddCourtForm({ onCancel, onSuccess, initialData = null }) {
       url: URL.createObjectURL(file)
     }));
     setFormData(prev => ({ ...prev, videos: [...prev.videos, ...newVideos] }));
+    e.target.value = '';
   };
 
   const removeMedia = (type, index) => {
@@ -231,8 +230,8 @@ function AddCourtForm({ onCancel, onSuccess, initialData = null }) {
 
       // Append existing files if editing
       if (initialData) {
-        formData.existingImages.forEach(url => submitData.append('existing_images[]', url));
-        formData.existingVideos.forEach(url => submitData.append('existing_videos[]', url));
+        formData.existingImages.forEach(url => submitData.append('existing_images', url));
+        formData.existingVideos.forEach(url => submitData.append('existing_videos', url));
 
         await courtsApi.update(initialData.id, submitData);
       } else {

@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Edit2, Plus, Building, Upload, X, MapPin, Clock, Camera, ChevronDown, Eye, Trash2 } from 'lucide-react';
 import ToggleSwitch from './ToggleSwitch';
-import { citiesApi, areasApi, gameTypesApi, amenitiesApi, branchesApi } from '../../services/adminApi';
+import { citiesApi, areasApi, gameTypesApi, amenitiesApi, branchesApi, IMAGE_BASE_URL } from '../../services/adminApi';
 
 function BranchesSettings() {
   const [branches, setBranches] = useState([]);
@@ -216,6 +216,7 @@ function BranchesSettings() {
       };
       reader.readAsDataURL(file);
     });
+    e.target.value = '';
   };
 
   const handleRemoveImage = (index) => {
@@ -304,7 +305,7 @@ function BranchesSettings() {
 
       if (editingBranch) {
         // Append existing images for update
-        formData.existingImages.forEach(url => submitData.append('existing_images[]', url));
+        formData.existingImages.forEach(url => submitData.append('existing_images', url));
         await branchesApi.update(editingBranch.id, submitData);
       } else {
         await branchesApi.create(submitData);
@@ -852,7 +853,12 @@ function BranchViewModal({ branch, onClose }) {
             <div className="flex flex-wrap gap-4">
               {branch.images.map((url, index) => (
                 <div key={index} className="w-32 h-32 rounded-lg overflow-hidden border border-slate-200">
-                  <img src={url} alt={`${branch.name} ${index + 1}`} className="w-full h-full object-cover" />
+                  <img
+                    src={`${IMAGE_BASE_URL}${url}`}
+                    alt={`${branch.name} ${index + 1}`}
+                    className="w-full h-full object-cover"
+                    onError={(e) => { e.target.style.display = 'none'; }}
+                  />
                 </div>
               ))}
             </div>

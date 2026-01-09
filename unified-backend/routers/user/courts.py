@@ -297,37 +297,43 @@ def get_available_slots(
                 })
 
         # Generate time slots from all matching configurations
+        # CHANGED: Each configuration now creates a SINGLE slot instead of hourly slots
         all_slots = []
 
         for config in matching_configs:
-            print(f"[COURTS API] Generating slots: {config['start_hour']}-{config['end_hour']}h, ₹{config['price']}")
-            for hour in range(config['start_hour'], config['end_hour']):
-                time_str = f"{hour:02d}:00"
-                period = "AM" if hour < 12 else "PM"
-                display_hour = hour
-                if display_hour > 12:
-                    display_hour -= 12
-                if display_hour == 0:
-                    display_hour = 12
+            start_hour = config['start_hour']
+            end_hour = config['end_hour']
+            
+            print(f"[COURTS API] Creating single slot: {start_hour:02d}:00-{end_hour:02d}:00, ₹{config['price']}")
+            
+            # Format start time
+            start_time_str = f"{start_hour:02d}:00"
+            start_period = "AM" if start_hour < 12 else "PM"
+            start_display_hour = start_hour
+            if start_display_hour > 12:
+                start_display_hour -= 12
+            if start_display_hour == 0:
+                start_display_hour = 12
 
-                # Calculate end time for display
-                end_hour = (hour + 1) % 24
-                end_period = "AM" if end_hour < 12 else "PM"
-                if end_hour > 12:
-                    end_display_hour = end_hour - 12
-                elif end_hour == 0:
-                    end_display_hour = 12
-                else:
-                    end_display_hour = end_hour
+            # Format end time
+            end_time_str = f"{end_hour:02d}:00"
+            end_period = "AM" if end_hour < 12 else "PM"
+            end_display_hour = end_hour
+            if end_display_hour > 12:
+                end_display_hour -= 12
+            if end_display_hour == 0:
+                end_display_hour = 12
 
-                slot = {
-                    "time": time_str,
-                    "end_time": f"{end_hour:02d}:00",
-                    "display_time": f"{display_hour:02d}:00 {period} - {end_display_hour:02d}:00 {end_period}",
-                    "price": config['price'],
-                    "available": True
-                }
-                all_slots.append(slot)
+            # Create a SINGLE slot for the entire time range
+            slot = {
+                "time": start_time_str,
+                "end_time": end_time_str,
+                "display_time": f"{start_display_hour:02d}:00 {start_period} - {end_display_hour:02d}:00 {end_period}",
+                "price": config['price'],
+                "available": True,
+                "slot_id": config.get('id', f"{start_time_str}-{end_time_str}")
+            }
+            all_slots.append(slot)
 
         print(f"[COURTS API] Total slots generated: {len(all_slots)}")
         

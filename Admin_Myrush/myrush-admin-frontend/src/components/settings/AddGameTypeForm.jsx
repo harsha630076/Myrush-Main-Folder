@@ -38,6 +38,7 @@ function AddGameTypeForm({ onCancel, onSave, initialData = null }) {
                 }
             }));
         }
+        e.target.value = '';
     };
 
     const removeIcon = () => {

@@ -88,8 +88,10 @@ async def global_exception_handler(request: Request, exc: Exception):
 UPLOAD_DIR = Path("uploads")
 UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 
-# Mount static files for uploads
+# Mount uploads static directory
 app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
+
+
 
 # Root endpoint
 @app.get("/")
