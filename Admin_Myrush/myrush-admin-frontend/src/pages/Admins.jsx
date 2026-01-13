@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Layout from '../components/Layout';
 import { adminsApi, branchesApi } from '../services/adminApi';
-import { Plus, Save, X, User, Shield, Phone, MapPin, Mail } from 'lucide-react';
+import { Plus, Save, X, User, Shield, Phone, MapPin, Mail, Edit, Trash2, Eye } from 'lucide-react';
 
 function Admins() {
     const navigate = useNavigate();
@@ -19,6 +19,8 @@ function Admins() {
     });
     const [loading, setLoading] = useState(false);
     const [message, setMessage] = useState({ type: '', text: '' });
+    const [editingAdminId, setEditingAdminId] = useState(null);
+    const [isViewMode, setIsViewMode] = useState(false);
 
     useEffect(() => {
         const token = localStorage.getItem('admin_token');
@@ -54,7 +56,7 @@ function Admins() {
 
         try {
             // Basic validation
-            if (!formData.name || !formData.mobile || !formData.password || !formData.email) {
+            if (!formData.name || !formData.mobile || (!editingAdminId && !formData.password) || !formData.email) {
                 throw new Error('Please fill all required fields');
             }
             if (formData.role === 'branch_admin' && !formData.branch_id) {
@@ -65,17 +67,67 @@ function Admins() {
             if (payload.role === 'super_admin') {
                 delete payload.branch_id;
             }
+            // Remove empty password if editing (so it doesn't try to hash empty string)
+            if (editingAdminId && !payload.password) {
+                delete payload.password;
+            }
 
-            await adminsApi.create(payload);
-            setMessage({ type: 'success', text: 'Admin created successfully!' });
+            if (editingAdminId) {
+                await adminsApi.update(editingAdminId, payload);
+                setMessage({ type: 'success', text: 'Admin updated successfully!' });
+            } else {
+                await adminsApi.create(payload);
+                setMessage({ type: 'success', text: 'Admin created successfully!' });
+            }
 
             loadData();
             resetForm();
             setShowForm(false);
         } catch (error) {
-            setMessage({ type: 'error', text: error.message || 'Failed to create admin.' });
+            setMessage({ type: 'error', text: error.message || 'Failed to save admin.' });
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleEdit = (admin) => {
+        setFormData({
+            name: admin.name,
+            mobile: admin.mobile,
+            email: admin.email || '',
+            password: '', // Don't populate password
+            role: admin.role,
+            branch_id: admin.branch_id || ''
+        });
+        setEditingAdminId(admin.id);
+        setIsViewMode(false);
+        setShowForm(true);
+        setMessage({ type: '', text: '' });
+    };
+
+    const handleView = (admin) => {
+        setFormData({
+            name: admin.name,
+            mobile: admin.mobile,
+            email: admin.email || '',
+            password: '',
+            role: admin.role,
+            branch_id: admin.branch_id || ''
+        });
+        setEditingAdminId(admin.id);
+        setIsViewMode(true);
+        setShowForm(true);
+        setMessage({ type: '', text: '' });
+    };
+
+    const handleDelete = async (id) => {
+        if (!window.confirm('Are you sure you want to delete this admin?')) return;
+        try {
+            await adminsApi.delete(id);
+            setMessage({ type: 'success', text: 'Admin deleted successfully' });
+            loadData();
+        } catch (error) {
+            setMessage({ type: 'error', text: 'Failed to delete admin' });
         }
     };
 
@@ -88,6 +140,8 @@ function Admins() {
             role: 'super_admin',
             branch_id: ''
         });
+        setEditingAdminId(null);
+        setIsViewMode(false);
     };
 
     const handleLogout = () => {
@@ -108,8 +162,12 @@ function Admins() {
                 <div className="mb-8">
                     <div className="flex items-center justify-between">
                         <div>
-                            <h1 className="text-3xl font-bold text-slate-900">Add New Admin</h1>
-                            <p className="mt-1 text-slate-500">Create a new administrator account.</p>
+                            <h1 className="text-3xl font-bold text-slate-900">
+                                {isViewMode ? 'View Admin' : (editingAdminId ? 'Edit Admin' : 'Add New Admin')}
+                            </h1>
+                            <p className="mt-1 text-slate-500">
+                                {isViewMode ? 'View admin details.' : (editingAdminId ? 'Update admin details.' : 'Create a new administrator account.')}
+                            </p>
                         </div>
                         <button
                             onClick={() => setShowForm(false)}
@@ -134,7 +192,8 @@ function Admins() {
                                 name="role"
                                 value={formData.role}
                                 onChange={handleInputChange}
-                                className="w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm outline-none transition-all focus:border-green-500 focus:ring-2 focus:ring-green-500/20"
+                                disabled={isViewMode}
+                                className="w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm outline-none transition-all focus:border-green-500 focus:ring-2 focus:ring-green-500/20 disabled:bg-slate-100 disabled:text-slate-500"
                             >
                                 <option value="super_admin">Super Admin</option>
                                 <option value="branch_admin">Branch Admin</option>
@@ -149,7 +208,8 @@ function Admins() {
                                     value={formData.branch_id}
                                     onChange={handleInputChange}
                                     required
-                                    className="w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm outline-none transition-all focus:border-green-500 focus:ring-2 focus:ring-green-500/20"
+                                    disabled={isViewMode}
+                                    className="w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm outline-none transition-all focus:border-green-500 focus:ring-2 focus:ring-green-500/20 disabled:bg-slate-100 disabled:text-slate-500"
                                 >
                                     <option value="">Select a Branch</option>
                                     {branches.map(branch => (
@@ -170,7 +230,8 @@ function Admins() {
                                     value={formData.name}
                                     onChange={handleInputChange}
                                     required
-                                    className="w-full rounded-lg border border-slate-200 bg-slate-50 pl-10 pr-4 py-2.5 text-sm outline-none transition-all focus:border-green-500 focus:ring-2 focus:ring-green-500/20"
+                                    disabled={isViewMode}
+                                    className="w-full rounded-lg border border-slate-200 bg-slate-50 pl-10 pr-4 py-2.5 text-sm outline-none transition-all focus:border-green-500 focus:ring-2 focus:ring-green-500/20 disabled:bg-slate-100 disabled:text-slate-500"
                                 />
                             </div>
                         </div>
@@ -186,7 +247,8 @@ function Admins() {
                                     value={formData.email}
                                     onChange={handleInputChange}
                                     required
-                                    className="w-full rounded-lg border border-slate-200 bg-slate-50 pl-10 pr-4 py-2.5 text-sm outline-none transition-all focus:border-green-500 focus:ring-2 focus:ring-green-500/20"
+                                    disabled={isViewMode}
+                                    className="w-full rounded-lg border border-slate-200 bg-slate-50 pl-10 pr-4 py-2.5 text-sm outline-none transition-all focus:border-green-500 focus:ring-2 focus:ring-green-500/20 disabled:bg-slate-100 disabled:text-slate-500"
                                 />
                             </div>
                         </div>
@@ -202,45 +264,74 @@ function Admins() {
                                     value={formData.mobile}
                                     onChange={handleInputChange}
                                     required
-                                    className="w-full rounded-lg border border-slate-200 bg-slate-50 pl-10 pr-4 py-2.5 text-sm outline-none transition-all focus:border-green-500 focus:ring-2 focus:ring-green-500/20"
+                                    disabled={isViewMode}
+                                    className="w-full rounded-lg border border-slate-200 bg-slate-50 pl-10 pr-4 py-2.5 text-sm outline-none transition-all focus:border-green-500 focus:ring-2 focus:ring-green-500/20 disabled:bg-slate-100 disabled:text-slate-500"
                                 />
                             </div>
                         </div>
 
-                        <div>
-                            <label className="mb-2 block text-sm font-medium text-slate-700">Password</label>
-                            <div className="relative">
-                                <Shield className="absolute left-3 top-2.5 h-5 w-5 text-slate-400" />
-                                <input
-                                    type="password"
-                                    name="password"
-                                    placeholder="Set a password"
-                                    value={formData.password}
-                                    onChange={handleInputChange}
-                                    required
-                                    className="w-full rounded-lg border border-slate-200 bg-slate-50 pl-10 pr-4 py-2.5 text-sm outline-none transition-all focus:border-green-500 focus:ring-2 focus:ring-green-500/20"
-                                />
+                        {!isViewMode && (
+                            <div>
+                                <label className="mb-2 block text-sm font-medium text-slate-700">
+                                    {editingAdminId ? 'New Password (Optional)' : 'Password'}
+                                </label>
+                                <div className="relative">
+                                    <Shield className="absolute left-3 top-2.5 h-5 w-5 text-slate-400" />
+                                    <input
+                                        type="password"
+                                        name="password"
+                                        placeholder={editingAdminId ? "Leave blank to keep current" : "Set a password"}
+                                        value={formData.password}
+                                        onChange={handleInputChange}
+                                        required={!editingAdminId}
+                                        className="w-full rounded-lg border border-slate-200 bg-slate-50 pl-10 pr-4 py-2.5 text-sm outline-none transition-all focus:border-green-500 focus:ring-2 focus:ring-green-500/20"
+                                    />
+                                </div>
                             </div>
-                        </div>
+                        )}
 
-                        <div className="flex items-center gap-4 pt-4">
-                            <button
-                                type="submit"
-                                disabled={loading}
-                                className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-green-600 px-6 py-2.5 text-sm font-semibold text-white transition-all hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                            >
-                                <Save className="h-4 w-4" />
-                                {loading ? 'Creating...' : 'Create Admin'}
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() => setShowForm(false)}
-                                className="flex items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-6 py-2.5 text-sm font-semibold text-slate-700 transition-all hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-slate-200 focus:ring-offset-2"
-                            >
-                                <X className="h-4 w-4" />
-                                Cancel
-                            </button>
-                        </div>
+                        {!isViewMode && (
+                            <div className="flex items-center gap-4 pt-4">
+                                <button
+                                    type="submit"
+                                    disabled={loading}
+                                    className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-green-600 px-6 py-2.5 text-sm font-semibold text-white transition-all hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                    <Save className="h-4 w-4" />
+                                    {loading ? 'Saving...' : (editingAdminId ? 'Update Admin' : 'Create Admin')}
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setShowForm(false)}
+                                    className="flex items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-6 py-2.5 text-sm font-semibold text-slate-700 transition-all hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-slate-200 focus:ring-offset-2"
+                                >
+                                    <X className="h-4 w-4" />
+                                    Cancel
+                                </button>
+                            </div>
+                        )}
+                        {isViewMode && (
+                            <div className="flex items-center gap-4 pt-4">
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setIsViewMode(false);
+                                    }}
+                                    className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-blue-600 px-6 py-2.5 text-sm font-semibold text-white transition-all hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                                >
+                                    <Edit className="h-4 w-4" />
+                                    Edit Admin
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setShowForm(false)}
+                                    className="flex items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-6 py-2.5 text-sm font-semibold text-slate-700 transition-all hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-slate-200 focus:ring-offset-2"
+                                >
+                                    <X className="h-4 w-4" />
+                                    Close
+                                </button>
+                            </div>
+                        )}
                     </form>
                 </div>
             </Layout>
@@ -256,7 +347,10 @@ function Admins() {
                         <p className="mt-1 text-slate-500">View and manage super admins and branch admins.</p>
                     </div>
                     <button
-                        onClick={() => setShowForm(true)}
+                        onClick={() => {
+                            resetForm();
+                            setShowForm(true);
+                        }}
                         className="rounded-lg bg-green-600 p-3 text-white hover:bg-green-700 transition-colors flex items-center gap-2"
                     >
                         <Plus className="h-6 w-6" />
@@ -264,6 +358,12 @@ function Admins() {
                     </button>
                 </div>
             </div>
+
+            {message.text && (
+                <div className={`mb-6 flex items-center rounded-lg p-4 text-sm font-medium ${message.type === 'success' ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-700'}`}>
+                    {message.text}
+                </div>
+            )}
 
             <div className="rounded-2xl bg-white p-6 shadow-sm border border-slate-100">
                 <h2 className="mb-6 text-xl font-bold text-slate-900">All Admins</h2>
@@ -277,6 +377,7 @@ function Admins() {
                                 <th className="px-6 py-3 font-semibold">Mobile</th>
                                 <th className="px-6 py-3 font-semibold">Email</th>
                                 <th className="px-6 py-3 font-semibold">Created</th>
+                                <th className="px-6 py-3 font-semibold text-right">Actions</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100">
@@ -313,11 +414,36 @@ function Admins() {
                                     <td className="px-6 py-4">
                                         {new Date(admin.created_at || Date.now()).toLocaleDateString()}
                                     </td>
+                                    <td className="px-6 py-4 text-right">
+                                        <div className="flex items-center justify-end gap-2">
+                                            <button
+                                                onClick={() => handleView(admin)}
+                                                className="p-1 text-slate-400 hover:text-blue-600 transition-colors"
+                                                title="View Details"
+                                            >
+                                                <Eye className="h-4 w-4" />
+                                            </button>
+                                            <button
+                                                onClick={() => handleEdit(admin)}
+                                                className="p-1 text-slate-400 hover:text-green-600 transition-colors"
+                                                title="Edit"
+                                            >
+                                                <Edit className="h-4 w-4" />
+                                            </button>
+                                            <button
+                                                onClick={() => handleDelete(admin.id)}
+                                                className="p-1 text-slate-400 hover:text-red-600 transition-colors"
+                                                title="Delete"
+                                            >
+                                                <Trash2 className="h-4 w-4" />
+                                            </button>
+                                        </div>
+                                    </td>
                                 </tr>
                             ))}
                             {admins.length === 0 && (
                                 <tr>
-                                    <td colSpan="5" className="px-6 py-12 text-center text-slate-400">
+                                    <td colSpan="7" className="px-6 py-12 text-center text-slate-400">
                                         No admins found.
                                     </td>
                                 </tr>

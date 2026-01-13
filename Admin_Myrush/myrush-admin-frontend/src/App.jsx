@@ -2,6 +2,8 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import AdminLogin from "./pages/AdminLogin";
 import Dashboard from "./pages/Dashboard";
 import Bookings from "./pages/Bookings";
+import BookingDetails from "./pages/BookingDetails";
+import EditBooking from "./pages/EditBooking";
 import Venues from "./pages/Venues";
 import Settings from "./pages/Settings";
 import CourtSlotsCalendar from "./components/settings/CourtSlotsCalendar";
@@ -17,6 +19,8 @@ function App() {
       <Route path="/login" element={<AdminLogin />} />
       <Route path="/dashboard" element={<Dashboard />} />
       <Route path="/bookings" element={<Bookings />} />
+      <Route path="/bookings/:id" element={<BookingDetails />} />
+      <Route path="/bookings/:id/edit" element={<EditBooking />} />
       <Route path="/venues" element={<Venues />} />
       <Route path="/settings" element={<Settings />} />
       <Route path="/calendar" element={<CourtSlotsCalendar />} />

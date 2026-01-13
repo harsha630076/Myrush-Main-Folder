@@ -47,7 +47,7 @@ def send_admin_credentials_email(to_email, name, mobile, password):
             <li><strong>Password:</strong> {password}</li>
         </ul>
         <p style="color: red; font-weight: bold;">IMPORTANT: You must change your password within 24 hours of your first login.</p>
-        <p>Please login at the admin dashboard.</p>
+        <p>Please login at: <a href="http://65.0.195.149/">http://65.0.195.149/</a></p>
         <br>
         <p>Best Regards,<br>MyRush Team</p>
     </body>

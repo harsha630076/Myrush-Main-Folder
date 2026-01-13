@@ -286,6 +286,14 @@ class AdminBase(BaseModel):
 class AdminCreate(AdminBase):
     password: str
 
+class AdminUpdate(BaseModel):
+    name: Optional[str] = None
+    mobile: Optional[str] = None
+    email: Optional[str] = None
+    role: Optional[str] = None
+    branch_id: Optional[str] = None
+    password: Optional[str] = None
+
 class Admin(AdminBase):
     id: str
     created_at: Optional[datetime] = None
@@ -434,6 +442,8 @@ class BookingCreate(BaseModel):
     original_amount: Optional[float] = None
     discount_amount: Optional[float] = 0
     coupon_code: Optional[str] = None
+    status: Optional[str] = None
+    payment_status: Optional[str] = None
 
 class BookingResponse(BaseModel):
     """Response model for bookings"""
@@ -517,6 +527,8 @@ class Booking(BaseModel):
 class AdminBooking(BaseModel):
     """Admin booking view with customer details"""
     id: str
+    user_id: Optional[str] = None
+    number_of_players: Optional[int] = 2
     customer_name: str
     customer_email: str
     customer_phone: str

@@ -265,6 +265,12 @@ def create_booking(db: Session, booking: schemas.BookingCreate, user_id: str):
             "end_time": end_time_val,
             "duration_minutes": total_duration,
             "price_per_hour": booking.price_per_hour or 0,
+
+            # Legacy fields required by DB constraints
+            "_old_start_time": start_time_val,
+            "_old_end_time": end_time_val,
+            "_old_duration_minutes": total_duration,
+            "_old_price_per_hour": booking.price_per_hour or 0,
             
             # Other fields
             "number_of_players": booking.number_of_players,

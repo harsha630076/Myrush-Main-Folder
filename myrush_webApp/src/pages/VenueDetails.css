@@ -1,0 +1,225 @@
+.venue-details-page {
+    background-color: #F5F7FA;
+    min-height: 100vh;
+    padding-bottom: 20px;
+    position: relative;
+}
+
+.details-header {
+    height: 35vh;
+    position: relative;
+}
+
+.header-image {
+    width: 100%;
+    height: 100%;
+    background-size: cover;
+    background-position: center;
+    border-radius: 0 0 30px 30px;
+    overflow: hidden;
+}
+
+.header-overlay {
+    background: linear-gradient(to bottom, rgba(0, 0, 0, 0.4), transparent);
+    height: 100%;
+    padding: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
+.back-btn,
+.fav-btn {
+    background: white;
+    border: none;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    font-size: 1.2rem;
+    cursor: pointer;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.details-content {
+    padding: 20px;
+    margin-top: -30px;
+    /* Overlap with header slightly? No, mobile design usually flat after header */
+}
+
+.info-section {
+    margin-bottom: 25px;
+}
+
+.info-section h1 {
+    margin: 0 0 10px;
+    font-size: 1.5rem;
+    color: #333;
+}
+
+.location-row {
+    color: #666;
+    margin-bottom: 10px;
+    font-size: 0.9rem;
+}
+
+.rating-row {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.rating-row strong {
+    font-size: 1.1rem;
+    color: #333;
+}
+
+.rating-row .count {
+    color: #999;
+}
+
+.section-title {
+    font-size: 1.2rem;
+    margin-bottom: 15px;
+    color: #333;
+}
+
+.amenities-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    margin-bottom: 25px;
+}
+
+.amenity-item {
+    width: 22%;
+    /* 4 per row */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 5px;
+}
+
+.amenity-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background-color: #E0F2F1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    color: var(--primary-color);
+}
+
+.amenity-item span {
+    font-size: 0.75rem;
+    color: #666;
+}
+
+.about-section,
+.terms-section,
+.reviews-section {
+    margin-bottom: 25px;
+}
+
+.about-section h3,
+.terms-section h3,
+.reviews-section h3 {
+    margin: 0 0 10px;
+    font-size: 1.1rem;
+    color: #333;
+}
+
+.about-section p,
+.terms-section p {
+    color: #666;
+    line-height: 1.5;
+    font-size: 0.95rem;
+}
+
+.review-card {
+    background: white;
+    padding: 15px;
+    border-radius: 12px;
+    margin-bottom: 15px;
+}
+
+.review-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 5px;
+}
+
+.review-date {
+    display: block;
+    margin-top: 5px;
+    font-size: 0.8rem;
+    color: #999;
+}
+
+.details-footer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    /* Explicit width */
+    background: white;
+    padding: 20px 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.1);
+    z-index: 1000;
+    /* Higher z-index */
+    box-sizing: border-box;
+    /* Prevent padding from adding to width */
+}
+
+@media (min-width: 768px) {
+    .details-footer {
+        /* On desktop, maybe align to center if content is centered, or keep full width */
+        width: 100%;
+    }
+}
+
+.price-info .label {
+    display: block;
+    font-size: 0.8rem;
+    color: #999;
+}
+
+.price-info .amount strong {
+    font-size: 1.5rem;
+    color: var(--color-black);
+    /* Use black for price for readability */
+}
+
+.price-info .amount span {
+    font-size: 0.9rem;
+    color: #999;
+    margin-left: 4px;
+}
+
+.book-now-btn {
+    background-color: var(--color-lime);
+    /* Ensure lime variable is used */
+    color: var(--color-black);
+    /* Black text on lime is high contrast premium look */
+    border: none;
+    padding: 14px 40px;
+    border-radius: 50px;
+    font-weight: 800;
+    font-size: 1rem;
+    text-transform: uppercase;
+    cursor: pointer;
+    box-shadow: 0 4px 15px rgba(50, 205, 50, 0.4);
+    transition: transform 0.2s;
+}
+
+.book-now-btn:active {
+    transform: scale(0.98);
+}

@@ -237,6 +237,8 @@ def get_all_bookings(
             # Create AdminBooking response
             admin_booking = schemas.AdminBooking(
                 id=str(booking.id),
+                user_id=str(booking.user_id) if booking.user_id else None,
+                number_of_players=booking.number_of_players,
                 customer_name=customer_name,
                 customer_email=customer_email,
                 customer_phone=customer_phone,
@@ -324,6 +326,8 @@ def get_booking(booking_id: str, db: Session = Depends(get_db)):
     # Create AdminBooking response
     return schemas.AdminBooking(
         id=str(booking.id),
+        user_id=str(booking.user_id) if booking.user_id else None,
+        number_of_players=booking.number_of_players,
         customer_name=customer_name,
         customer_email=customer_email,
         customer_phone=customer_phone,
@@ -348,6 +352,82 @@ def get_booking(booking_id: str, db: Session = Depends(get_db)):
         coupon_code=booking.coupon.code if booking.coupon else None,
         coupon_discount=booking.coupon_discount or 0
     )
+
+@router.put("/{booking_id}", response_model=schemas.AdminBooking)
+def update_booking(booking_id: str, booking_update: schemas.BookingCreate, db: Session = Depends(get_db)):
+    """Update an existing booking"""
+    db_booking = db.query(models.Booking).filter(models.Booking.id == booking_id).first()
+    if not db_booking:
+        raise HTTPException(status_code=404, detail="Booking not found")
+
+    # Helper to parse time string
+    def parse_time_str(t_str):
+        if not t_str: return None
+        for fmt in ('%H:%M', '%H:%M:%S', '%I:%M %p'):
+            try:
+                return datetime.strptime(t_str, fmt).time()
+            except ValueError:
+                continue
+        return None
+
+    # Parse times
+    start_time_obj = parse_time_str(booking_update.start_time)
+    end_time_obj = parse_time_str(booking_update.end_time)
+
+    if not start_time_obj:
+        raise HTTPException(status_code=400, detail="Invalid start_time format")
+
+    # Calculate duration
+    duration_minutes = booking_update.duration_minutes
+    if end_time_obj:
+        start_dt = datetime.combine(date.today(), start_time_obj)
+        end_dt = datetime.combine(date.today(), end_time_obj)
+        calc_duration = (end_dt - start_dt).seconds / 60
+        if calc_duration < 0:
+             calc_duration += 24 * 60
+        if duration_minutes == 0:
+            duration_minutes = int(calc_duration)
+    
+    # Calculate total amount if not provided
+    if booking_update.total_amount is not None:
+         total_amount = Decimal(booking_update.total_amount)
+    else:
+         total_amount = Decimal(duration_minutes / 60) * Decimal(booking_update.price_per_hour)
+
+    original_amount = booking_update.original_amount or total_amount
+
+    # Update fields
+    db_booking.user_id = booking_update.user_id
+    db_booking.court_id = booking_update.court_id
+    db_booking.booking_date = booking_update.booking_date
+    db_booking.start_time = start_time_obj
+    db_booking.end_time = end_time_obj
+    db_booking.duration_minutes = duration_minutes
+    db_booking.total_duration_minutes = duration_minutes
+    db_booking.total_amount = total_amount
+    db_booking.original_amount = original_amount
+    db_booking.special_requests = booking_update.special_requests
+    db_booking.time_slots = booking_update.time_slots
+    db_booking.number_of_players = booking_update.number_of_players
+    
+    if booking_update.status:
+        db_booking.status = booking_update.status
+    if booking_update.payment_status:
+        db_booking.payment_status = booking_update.payment_status
+    
+    # Deprecated/Legacy fields
+    db_booking._old_start_time = start_time_obj
+    db_booking._old_end_time = end_time_obj
+    db_booking._old_duration_minutes = duration_minutes
+    db_booking._old_price_per_hour = booking_update.price_per_hour
+
+    try:
+        db.commit()
+        db.refresh(db_booking)
+        return get_booking(str(db_booking.id), db)
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Failed to update booking: {str(e)}")
 
 @router.patch("/{booking_id}/status")
 def update_booking_status(booking_id: str, request: dict, db: Session = Depends(get_db)):

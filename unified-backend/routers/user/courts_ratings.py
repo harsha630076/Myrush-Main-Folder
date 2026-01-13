@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import text
 from typing import Optional
 import database
+import uuid
 
 router = APIRouter(
     prefix="/courts",
@@ -112,6 +113,16 @@ def get_courts(
 def get_court_ratings(court_id: str, db: Session = Depends(database.get_db)):
     """Get ratings summary for a specific court"""
     try:
+        try:
+            uuid.UUID(court_id)
+        except ValueError:
+             # Return empty ratings structure instead of crashing or 404 for easier frontend handling
+             return {
+                "court_id": court_id,
+                "average_rating": 0,
+                "total_reviews": 0,
+                "rating_distribution": {"5": 0, "4": 0, "3": 0, "2": 0, "1": 0}
+            }
         query_sql = """
             SELECT
                 court_id,
@@ -175,6 +186,11 @@ def get_court_reviews(
 ):
     """Get reviews for a specific court"""
     try:
+        try:
+            uuid.UUID(court_id)
+        except ValueError:
+             return { "court_id": court_id, "reviews": [], "total": 0 }
+
         query_sql = """
             SELECT
                 r.id,

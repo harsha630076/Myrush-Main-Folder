@@ -17,7 +17,7 @@ import {
     Building,
     Play,
     Puzzle,
-    DollarSign,
+    IndianRupee,
     Tag,
     Users,
 } from 'lucide-react';
@@ -56,7 +56,7 @@ const Sidebar = ({ onLogout }) => {
 
     const bookingsItems = [
         { id: 'manage', label: 'Manage Bookings', icon: Calendar },
-        { id: 'transactions', label: 'Transactions & Earnings', icon: DollarSign },
+        { id: 'transactions', label: 'Transactions & Earnings', icon: IndianRupee },
         { id: 'policies', label: 'Policies & Terms', icon: FileText },
     ];
 
@@ -114,22 +114,7 @@ const Sidebar = ({ onLogout }) => {
             </div>
 
             {/* User Profile Summary */}
-            <div className="border-b border-gray-100 px-6 py-6">
-                <div className="flex items-center gap-4">
-                    <div className="relative">
-                        <img
-                            src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80"
-                            alt="Admin"
-                            className="h-14 w-14 rounded-xl object-cover border-3 border-purple-100"
-                        />
-                        <span className="absolute bottom-0 right-0 h-4 w-4 rounded-full bg-green-500 border-2 border-white"></span>
-                    </div>
-                    <div>
-                        <p className="text-sm font-bold text-gray-900">David Grey. H</p>
-                        <p className="text-xs text-gray-500">Project Manager</p>
-                    </div>
-                </div>
-            </div>
+
 
             {/* Navigation */}
             <div className="px-4 py-6">
@@ -205,19 +190,19 @@ const Sidebar = ({ onLogout }) => {
                 </ul>
 
                 {/* Divider */}
-                <div className="my-6 border-t border-gray-200"></div>
+                {/*<div className="my-6 border-t border-gray-200"></div>*/}
 
                 {/* Projects Section */}
-                <div className="mb-8">
+                {/*<div className="mb-8">
                     <p className="mb-4 px-2 text-xs font-bold uppercase tracking-widest text-gray-500">Projects</p>
                     <button className="flex w-full items-center justify-center gap-2 rounded-xl bg-green-600 py-3 text-sm font-semibold text-white shadow-lg transition-all duration-200 hover:shadow-xl active:scale-95">
                         <Plus className="h-5 w-5" />
                         <span>Add Project</span>
                     </button>
-                </div>
+                </div>*/}
 
                 {/* Categories Section */}
-                <div className="mb-8">
+                {/*<div className="mb-8">
                     <p className="mb-4 px-2 text-xs font-bold uppercase tracking-widest text-gray-500">Categories</p>
                     <div className="space-y-3 px-2">
                         <div className="flex items-center gap-3 rounded-lg px-3 py-2 hover:bg-gray-50 transition-colors">
@@ -229,7 +214,7 @@ const Sidebar = ({ onLogout }) => {
                             <span className="text-sm font-medium text-gray-700">Pro</span>
                         </div>
                     </div>
-                </div>
+                </div>*/}
 
                 {/* Divider */}
                 <div className="my-6 border-t border-gray-200"></div>

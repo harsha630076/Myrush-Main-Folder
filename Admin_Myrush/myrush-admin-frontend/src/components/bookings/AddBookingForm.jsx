@@ -62,7 +62,7 @@ const TimePicker = ({ value, onChange, className }) => {
     );
 };
 
-export default function AddBookingForm({ onClose, onBookingAdded }) {
+export default function AddBookingForm({ onClose, onBookingAdded, booking = null, isFullPage = false }) {
     const [courts, setCourts] = useState([]);
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -79,12 +79,43 @@ export default function AddBookingForm({ onClose, onBookingAdded }) {
 
     useEffect(() => {
         fetchData();
-    }, []);
+        if (booking) {
+            // Robustly map time slots ensuring we have start/end keys
+            const mappedSlots = (booking.time_slots && booking.time_slots.length > 0)
+                ? booking.time_slots.map(slot => ({
+                    start: slot.start || slot.start_time || slot.startTime,
+                    end: slot.end || slot.end_time || slot.endTime,
+                    price: slot.price || slot.price_per_slot || 0 // Assuming price might be there
+                }))
+                : [{
+                    start: booking.start_time,
+                    end: booking.end_time,
+                    price: booking.price_per_hour || 0
+                }];
+
+            // Populate form with booking data
+            setFormData({
+                court_id: booking.court_id || booking.court?.id || '',
+                user_id: booking.user_id || booking.customer_id || '',
+                date: booking.booking_date,
+                time_slots: mappedSlots,
+                status: booking.status,
+                payment_status: booking.payment_status,
+                total_amount: booking.total_amount
+            });
+        }
+    }, [booking]);
 
     useEffect(() => {
         // Recalculate total amount when slots change
-        const total = formData.time_slots.reduce((sum, slot) => sum + (parseFloat(slot.price) || 0), 0);
-        setFormData(prev => ({ ...prev, total_amount: total }));
+        // Only if not initial load/edit to prevent overriding manual adjustments if logic differs,
+        // but for now, keep it simple.
+        if (formData.time_slots) {
+            const total = formData.time_slots.reduce((sum, slot) => sum + (parseFloat(slot.price) || 0), 0);
+            if (total !== parseFloat(formData.total_amount)) {
+                setFormData(prev => ({ ...prev, total_amount: total }));
+            }
+        }
     }, [formData.time_slots]);
 
     const fetchData = async () => {
@@ -136,12 +167,15 @@ export default function AddBookingForm({ onClose, onBookingAdded }) {
         }
 
         try {
-            // Structure the data for the API
-            // The API likely expects individual start_time/end_time or the new time_slots array
-            // Based on previous convos, we are moving to time_slots.
-            // But we should also populate start_time/end_time legacy fields for compatibility if needed.
             const firstSlot = formData.time_slots[0];
             const lastSlot = formData.time_slots[formData.time_slots.length - 1];
+
+            // Ensure we have valid time strings before sending
+            const cleanSlots = formData.time_slots.map(slot => ({
+                start: slot.start,
+                end: slot.end,
+                price: parseFloat(slot.price) || 0
+            }));
 
             const payload = {
                 court_id: formData.court_id,
@@ -149,187 +183,199 @@ export default function AddBookingForm({ onClose, onBookingAdded }) {
                 booking_date: formData.date,
                 start_time: firstSlot.start,
                 end_time: lastSlot.end,
-                duration_minutes: formData.time_slots.length * 60, // Assuming 1 hour per slot for now, or calc exactly
+                duration_minutes: formData.time_slots.length * 60,
                 total_amount: formData.total_amount,
                 status: formData.status,
                 payment_status: formData.payment_status,
-                time_slots: formData.time_slots,
-                price_per_hour: formData.time_slots.length > 0 ? parseFloat(formData.time_slots[0].price) : 0 // Fallback
+                time_slots: cleanSlots,
+                price_per_hour: cleanSlots.length > 0 ? cleanSlots[0].price : 0
             };
 
-            await bookingsApi.create(payload);
-            alert('Booking created successfully!');
+            if (booking) {
+                await bookingsApi.update(booking.id, payload);
+                alert('Booking updated successfully!');
+            } else {
+                await bookingsApi.create(payload);
+                alert('Booking created successfully!');
+            }
             onBookingAdded();
-            onClose();
+            if (!booking.isFullPage) onClose(); // Only close if modal
         } catch (error) {
-            console.error('Failed to create booking:', error);
-            alert(`Error creating booking: ${error.message}`);
+            console.error('Failed to save booking:', error);
+            alert(`Error saving booking: ${error.message}`);
         }
     };
 
     if (loading) return <div className="p-8 text-center">Loading...</div>;
 
+    const FormContent = () => (
+        <form onSubmit={handleSubmit} className="p-6 space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Court Selection */}
+                <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-2">Court</label>
+                    <select
+                        value={formData.court_id}
+                        onChange={(e) => setFormData({ ...formData, court_id: e.target.value })}
+                        className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                        required
+                    >
+                        <option value="">Select a Court</option>
+                        {courts.map(court => (
+                            <option key={court.id} value={court.id}>{court.name} ({court.branch?.city?.short_code}) - ₹{court.price_per_hour || court.default_price}/hr</option>
+                        ))}
+                    </select>
+                </div>
+
+                {/* User Selection */}
+                <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-2">User</label>
+                    <select
+                        value={formData.user_id}
+                        onChange={(e) => setFormData({ ...formData, user_id: e.target.value })}
+                        className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                        required
+                    >
+                        <option value="">Select a User</option>
+                        {users.map(user => (
+                            <option key={user.id} value={user.id}>{user.full_name} ({user.phone_number})</option>
+                        ))}
+                    </select>
+                </div>
+
+                {/* Date Selection */}
+                <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-2">Date</label>
+                    <div className="relative">
+                        <Calendar className="absolute left-3 top-2.5 h-5 w-5 text-slate-400" />
+                        <input
+                            type="date"
+                            value={formData.date}
+                            onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                            className="w-full pl-10 pr-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                            required
+                        />
+                    </div>
+                </div>
+
+                {/* Statuses */}
+                <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-2">Status</label>
+                    <div className="grid grid-cols-2 gap-2">
+                        <select
+                            value={formData.status}
+                            onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                            className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                        >
+                            <option value="pending">Pending</option>
+                            <option value="confirmed">Confirmed</option>
+                            <option value="cancelled">Cancelled</option>
+                        </select>
+                        <select
+                            value={formData.payment_status}
+                            onChange={(e) => setFormData({ ...formData, payment_status: e.target.value })}
+                            className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                        >
+                            <option value="pending">Unpaid</option>
+                            <option value="paid">Paid</option>
+                            <option value="failed">Failed</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            {/* Time Slots Section */}
+            <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                    <h3 className="text-lg font-medium text-slate-800">Time Slots</h3>
+                    <button
+                        type="button"
+                        onClick={addSlot}
+                        className="text-sm text-green-600 hover:text-green-700 font-medium flex items-center gap-1"
+                    >
+                        <Plus className="h-4 w-4" /> Add Slot
+                    </button>
+                </div>
+
+                <div className="bg-slate-50 rounded-lg p-4 space-y-3 border border-slate-200">
+                    {formData.time_slots.map((slot, index) => (
+                        <div key={index} className="flex flex-wrap md:flex-nowrap items-end gap-3 p-3 bg-white rounded-md border border-slate-200">
+                            <div className="flex-1">
+                                <label className="block text-xs font-medium text-slate-500 mb-1">Start Time</label>
+                                <TimePicker
+                                    value={slot.start}
+                                    onChange={(val) => handleSlotChange(index, 'start', val)}
+                                />
+                            </div>
+                            <div className="flex-1">
+                                <label className="block text-xs font-medium text-slate-500 mb-1">End Time</label>
+                                <TimePicker
+                                    value={slot.end}
+                                    onChange={(val) => handleSlotChange(index, 'end', val)}
+                                />
+                            </div>
+                            <div className="flex-1">
+                                <label className="block text-xs font-medium text-slate-500 mb-1">Price (₹)</label>
+                                <input
+                                    type="number"
+                                    value={slot.price}
+                                    onChange={(e) => handleSlotChange(index, 'price', e.target.value)}
+                                    className="w-full px-3 py-2 border border-slate-300 rounded focus:ring-2 focus:ring-green-500"
+                                    placeholder="Price"
+                                />
+                            </div>
+                            {formData.time_slots.length > 1 && (
+                                <button
+                                    type="button"
+                                    onClick={() => removeSlot(index)}
+                                    className="p-2 text-red-500 hover:bg-red-50 rounded mb-0.5"
+                                >
+                                    <Trash2 className="h-5 w-5" />
+                                </button>
+                            )}
+                        </div>
+                    ))}
+                </div>
+
+                <div className="flex justify-end items-center gap-2 text-lg font-medium text-slate-900">
+                    <span>Total Amount:</span>
+                    <span className="text-green-600">₹{formData.total_amount}</span>
+                </div>
+            </div>
+
+            {/* Actions */}
+            <div className="flex justify-end gap-3 pt-6 border-t border-slate-200">
+                <button
+                    type="button"
+                    onClick={onClose}
+                    className="px-6 py-2.5 bg-white border border-slate-300 rounded-lg text-slate-700 font-medium hover:bg-slate-50 transition-colors"
+                >
+                    Cancel
+                </button>
+                <button
+                    type="submit"
+                    className="px-6 py-2.5 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-colors shadow-sm shadow-green-200"
+                >
+                    {booking ? 'Update Booking' : 'Create Booking'}
+                </button>
+            </div>
+        </form>
+    );
+
+    if (isFullPage) {
+        return <FormContent />;
+    }
+
     return (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
             <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
                 <div className="flex items-center justify-between p-6 border-b border-slate-200 sticky top-0 bg-white z-10">
-                    <h2 className="text-xl font-semibold text-slate-800">Create New Booking</h2>
+                    <h2 className="text-xl font-semibold text-slate-800">{booking ? 'Edit Booking' : 'Create New Booking'}</h2>
                     <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-full text-slate-500">
                         <X className="h-5 w-5" />
                     </button>
                 </div>
-
-                <form onSubmit={handleSubmit} className="p-6 space-y-6">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        {/* Court Selection */}
-                        <div>
-                            <label className="block text-sm font-medium text-slate-700 mb-2">Court</label>
-                            <select
-                                value={formData.court_id}
-                                onChange={(e) => setFormData({ ...formData, court_id: e.target.value })}
-                                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500"
-                                required
-                            >
-                                <option value="">Select a Court</option>
-                                {courts.map(court => (
-                                    <option key={court.id} value={court.id}>{court.name} ({court.branch?.city?.short_code}) - ₹{court.price_per_hour || court.default_price}/hr</option>
-                                ))}
-                            </select>
-                        </div>
-
-                        {/* User Selection */}
-                        <div>
-                            <label className="block text-sm font-medium text-slate-700 mb-2">User</label>
-                            <select
-                                value={formData.user_id}
-                                onChange={(e) => setFormData({ ...formData, user_id: e.target.value })}
-                                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500"
-                                required
-                            >
-                                <option value="">Select a User</option>
-                                {users.map(user => (
-                                    <option key={user.id} value={user.id}>{user.full_name} ({user.phone_number})</option>
-                                ))}
-                            </select>
-                        </div>
-
-                        {/* Date Selection */}
-                        <div>
-                            <label className="block text-sm font-medium text-slate-700 mb-2">Date</label>
-                            <div className="relative">
-                                <Calendar className="absolute left-3 top-2.5 h-5 w-5 text-slate-400" />
-                                <input
-                                    type="date"
-                                    value={formData.date}
-                                    onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                                    className="w-full pl-10 pr-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500"
-                                    required
-                                />
-                            </div>
-                        </div>
-
-                        {/* Statuses */}
-                        <div>
-                            <label className="block text-sm font-medium text-slate-700 mb-2">Status</label>
-                            <div className="grid grid-cols-2 gap-2">
-                                <select
-                                    value={formData.status}
-                                    onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500"
-                                >
-                                    <option value="pending">Pending</option>
-                                    <option value="confirmed">Confirmed</option>
-                                    <option value="cancelled">Cancelled</option>
-                                </select>
-                                <select
-                                    value={formData.payment_status}
-                                    onChange={(e) => setFormData({ ...formData, payment_status: e.target.value })}
-                                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500"
-                                >
-                                    <option value="pending">Unpaid</option>
-                                    <option value="completed">Paid</option>
-                                    <option value="failed">Failed</option>
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Time Slots Section */}
-                    <div className="space-y-4">
-                        <div className="flex items-center justify-between">
-                            <h3 className="text-lg font-medium text-slate-800">Time Slots</h3>
-                            <button
-                                type="button"
-                                onClick={addSlot}
-                                className="text-sm text-green-600 hover:text-green-700 font-medium flex items-center gap-1"
-                            >
-                                <Plus className="h-4 w-4" /> Add Slot
-                            </button>
-                        </div>
-
-                        <div className="bg-slate-50 rounded-lg p-4 space-y-3 border border-slate-200">
-                            {formData.time_slots.map((slot, index) => (
-                                <div key={index} className="flex flex-wrap md:flex-nowrap items-end gap-3 p-3 bg-white rounded-md border border-slate-200">
-                                    <div className="flex-1">
-                                        <label className="block text-xs font-medium text-slate-500 mb-1">Start Time</label>
-                                        <TimePicker
-                                            value={slot.start}
-                                            onChange={(val) => handleSlotChange(index, 'start', val)}
-                                        />
-                                    </div>
-                                    <div className="flex-1">
-                                        <label className="block text-xs font-medium text-slate-500 mb-1">End Time</label>
-                                        <TimePicker
-                                            value={slot.end}
-                                            onChange={(val) => handleSlotChange(index, 'end', val)}
-                                        />
-                                    </div>
-                                    <div className="flex-1">
-                                        <label className="block text-xs font-medium text-slate-500 mb-1">Price (₹)</label>
-                                        <input
-                                            type="number"
-                                            value={slot.price}
-                                            onChange={(e) => handleSlotChange(index, 'price', e.target.value)}
-                                            className="w-full px-3 py-2 border border-slate-300 rounded focus:ring-2 focus:ring-green-500"
-                                            placeholder="Price"
-                                        />
-                                    </div>
-                                    {formData.time_slots.length > 1 && (
-                                        <button
-                                            type="button"
-                                            onClick={() => removeSlot(index)}
-                                            className="p-2 text-red-500 hover:bg-red-50 rounded mb-0.5"
-                                        >
-                                            <Trash2 className="h-5 w-5" />
-                                        </button>
-                                    )}
-                                </div>
-                            ))}
-                        </div>
-
-                        <div className="flex justify-end items-center gap-2 text-lg font-medium text-slate-900">
-                            <span>Total Amount:</span>
-                            <span className="text-green-600">₹{formData.total_amount}</span>
-                        </div>
-                    </div>
-
-                    {/* Actions */}
-                    <div className="flex justify-end gap-3 pt-6 border-t border-slate-200">
-                        <button
-                            type="button"
-                            onClick={onClose}
-                            className="px-6 py-2.5 bg-white border border-slate-300 rounded-lg text-slate-700 font-medium hover:bg-slate-50 transition-colors"
-                        >
-                            Cancel
-                        </button>
-                        <button
-                            type="submit"
-                            className="px-6 py-2.5 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-colors shadow-sm shadow-green-200"
-                        >
-                            Create Booking
-                        </button>
-                    </div>
-                </form>
+                <FormContent />
             </div>
         </div>
     );

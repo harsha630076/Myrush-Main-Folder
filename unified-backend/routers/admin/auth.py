@@ -168,6 +168,53 @@ def create_admin(admin: schemas.AdminCreate, db: Session = Depends(get_db)):
 
     return db_admin
 
+@router.put("/admins/{admin_id}", response_model=schemas.Admin)
+def update_admin(admin_id: str, admin_update: schemas.AdminUpdate, db: Session = Depends(get_db)):
+    """Update an admin"""
+    db_admin = db.query(models.Admin).filter(models.Admin.id == admin_id).first()
+    if not db_admin:
+        raise HTTPException(status_code=404, detail="Admin not found")
+    
+    # Check if mobile exists for other users
+    if admin_update.mobile and admin_update.mobile != db_admin.mobile:
+        existing = db.query(models.Admin).filter(models.Admin.mobile == admin_update.mobile).first()
+        if existing:
+            raise HTTPException(status_code=400, detail="Mobile number already registered")
+        db_admin.mobile = admin_update.mobile
+
+    # Check email
+    if admin_update.email and admin_update.email != db_admin.email:
+        existing = db.query(models.Admin).filter(models.Admin.email == admin_update.email).first()
+        if existing:
+            raise HTTPException(status_code=400, detail="Email already registered")
+        db_admin.email = admin_update.email
+
+    if admin_update.name:
+        db_admin.name = admin_update.name
+    if admin_update.role:
+        db_admin.role = admin_update.role
+    if admin_update.branch_id is not None: # Allow clearing branch_id if passed explicitly? Or just updates
+        db_admin.branch_id = admin_update.branch_id if admin_update.role == 'branch_admin' else None
+    
+    if admin_update.password:
+        db_admin.password_hash = admin_update.password
+        db_admin.must_change_password = False # Password changed, clear flag
+
+    db.commit()
+    db.refresh(db_admin)
+    return db_admin
+
+@router.delete("/admins/{admin_id}")
+def delete_admin(admin_id: str, db: Session = Depends(get_db)):
+    """Delete an admin"""
+    db_admin = db.query(models.Admin).filter(models.Admin.id == admin_id).first()
+    if not db_admin:
+        raise HTTPException(status_code=404, detail="Admin not found")
+    
+    db.delete(db_admin)
+    db.commit()
+    return {"message": "Admin deleted successfully"}
+
 @router.post("/admins/login")
 def admin_login(login_data: schemas.AdminLoginRequest, db: Session = Depends(get_db)):
     """Admin login"""

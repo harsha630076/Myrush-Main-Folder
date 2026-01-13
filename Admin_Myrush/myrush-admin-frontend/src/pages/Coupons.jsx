@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Plus, Search, Edit2, Trash2, Tag, Calendar, AlertCircle, Percent, DollarSign, Power } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import Layout from '../components/Layout';
+import ToggleSwitch from '../components/settings/ToggleSwitch';
 import { couponsApi, branchesApi, gameTypesApi, courtsApi, usersApi } from '../services/adminApi';
 
 function Coupons() {
@@ -531,16 +532,15 @@ function Coupons() {
                                                 <div className="text-xs text-gray-500">
                                                     Usage: {coupon.usage_count} / {coupon.usage_limit ? coupon.usage_limit : '∞'}
                                                 </div>
-                                                <button
-                                                    onClick={() => handleToggleStatus(coupon.id)}
-                                                    className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium transition-colors ${coupon.is_active
-                                                        ? 'bg-green-100 text-green-700 hover:bg-green-200'
-                                                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                                                        }`}
-                                                >
-                                                    <Power className="h-3 w-3" />
-                                                    {coupon.is_active ? 'Active' : 'Enable'}
-                                                </button>
+                                                <div className="flex items-center gap-2">
+                                                    <span className={`text-xs font-medium ${coupon.is_active ? 'text-green-600' : 'text-gray-500'}`}>
+                                                        {coupon.is_active ? 'Active' : 'Inactive'}
+                                                    </span>
+                                                    <ToggleSwitch
+                                                        isChecked={coupon.is_active}
+                                                        onToggle={() => handleToggleStatus(coupon.id)}
+                                                    />
+                                                </div>
                                             </div>
                                         </div>
                                     </div>

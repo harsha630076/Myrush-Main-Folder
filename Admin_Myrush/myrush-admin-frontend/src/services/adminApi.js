@@ -353,6 +353,13 @@ export const adminsApi = {
     create: (data) => apiRequest('/auth/admins', {
         method: 'POST',
         body: JSON.stringify(data)
+    }),
+    update: (id, data) => apiRequest(`/auth/admins/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(data)
+    }),
+    delete: (id) => apiRequest(`/auth/admins/${id}`, {
+        method: 'DELETE'
     })
 };
 

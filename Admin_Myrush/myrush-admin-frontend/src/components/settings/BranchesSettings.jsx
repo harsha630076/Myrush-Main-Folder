@@ -46,6 +46,57 @@ function BranchesSettings() {
     isActive: true
   });
 
+  // State for adding new City/Area inline
+  const [isAddingCity, setIsAddingCity] = useState(false);
+  const [newCityData, setNewCityData] = useState({ name: '', shortCode: '' });
+  const [isAddingArea, setIsAddingArea] = useState(false);
+  const [newAreaName, setNewAreaName] = useState('');
+
+  const handleCreateCity = async () => {
+    try {
+      const resp = await citiesApi.create({
+        name: newCityData.name,
+        short_code: newCityData.shortCode
+      });
+      // Refresh cities list
+      const updatedCities = await citiesApi.getAll();
+      setCities(updatedCities);
+
+      // Auto-select new city
+      setFormData(prev => ({ ...prev, cityId: resp.id, areaId: '' }));
+
+      // Reset state
+      setIsAddingCity(false);
+      setNewCityData({ name: '', shortCode: '' });
+    } catch (err) {
+      console.error("Failed to create city:", err);
+      setError("Failed to create city: " + err.message);
+    }
+  };
+
+  const handleCreateArea = async () => {
+    if (!formData.cityId) return;
+    try {
+      const resp = await areasApi.create({
+        name: newAreaName,
+        city_id: formData.cityId
+      });
+      // Refresh areas list
+      const updatedAreas = await areasApi.getAll();
+      setAreas(updatedAreas);
+
+      // Auto-select new area
+      setFormData(prev => ({ ...prev, areaId: resp.id }));
+
+      // Reset state
+      setIsAddingArea(false);
+      setNewAreaName('');
+    } catch (err) {
+      console.error("Failed to create area:", err);
+      setError("Failed to create area: " + err.message);
+    }
+  };
+
   // Fetch all initial data
   useEffect(() => {
     fetchAllData();
@@ -432,34 +483,135 @@ function BranchesSettings() {
           </div>
 
           {/* City and Area */}
+          {/* City and Area */}
           <div className="grid grid-cols-2 gap-4">
+            {/* City Selection or Creation */}
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">City *</label>
-              <select
-                value={formData.cityId}
-                onChange={(e) => setFormData({ ...formData, cityId: e.target.value, areaId: '' })}
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                required
-              >
-                <option value="">Select City</option>
-                {cities.filter(city => city.is_active).map((city) => (
-                  <option key={city.id} value={city.id}>{city.name} ({city.short_code})</option>
-                ))}
-              </select>
+              <div className="flex items-center justify-between mb-2">
+                <label className="block text-sm font-medium text-slate-700">City *</label>
+                {!isAddingCity && (
+                  <button
+                    type="button"
+                    onClick={() => setIsAddingCity(true)}
+                    className="text-xs flex items-center gap-1 text-green-600 hover:text-green-700 font-medium"
+                  >
+                    <Plus className="h-3 w-3" />
+                    New City
+                  </button>
+                )}
+              </div>
+
+              {isAddingCity ? (
+                <div className="p-3 bg-slate-50 rounded-lg border border-slate-200 space-y-3">
+                  <input
+                    type="text"
+                    placeholder="City Name"
+                    value={newCityData.name}
+                    onChange={(e) => setNewCityData({ ...newCityData, name: e.target.value })}
+                    className="w-full px-3 py-2 text-sm border border-slate-300 rounded focus:ring-1 focus:ring-green-500 outline-none"
+                  />
+                  <input
+                    type="text"
+                    placeholder="Short Code (e.g. BLR)"
+                    value={newCityData.shortCode}
+                    onChange={(e) => setNewCityData({ ...newCityData, shortCode: e.target.value.toUpperCase() })}
+                    className="w-full px-3 py-2 text-sm border border-slate-300 rounded focus:ring-1 focus:ring-green-500 outline-none"
+                  />
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={handleCreateCity}
+                      disabled={!newCityData.name || !newCityData.shortCode}
+                      className="flex-1 bg-green-600 text-white text-xs py-2 rounded hover:bg-green-700 disabled:opacity-50"
+                    >
+                      Add City
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsAddingCity(false);
+                        setNewCityData({ name: '', shortCode: '' });
+                      }}
+                      className="flex-1 bg-white border border-slate-300 text-slate-600 text-xs py-2 rounded hover:bg-slate-50"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <select
+                  value={formData.cityId}
+                  onChange={(e) => setFormData({ ...formData, cityId: e.target.value, areaId: '' })}
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                  required
+                >
+                  <option value="">Select City</option>
+                  {cities.filter(city => city.is_active).map((city) => (
+                    <option key={city.id} value={city.id}>{city.name} ({city.short_code})</option>
+                  ))}
+                </select>
+              )}
             </div>
+
+            {/* Area Selection or Creation */}
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">Area *</label>
-              <select
-                value={formData.areaId}
-                onChange={(e) => setFormData({ ...formData, areaId: e.target.value })}
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                disabled={!formData.cityId}
-              >
-                <option value="">Select Area</option>
-                {filteredAreas.map((area) => (
-                  <option key={area.id} value={area.id}>{area.name}</option>
-                ))}
-              </select>
+              <div className="flex items-center justify-between mb-2">
+                <label className="block text-sm font-medium text-slate-700">Area *</label>
+                {!isAddingArea && formData.cityId && (
+                  <button
+                    type="button"
+                    onClick={() => setIsAddingArea(true)}
+                    className="text-xs flex items-center gap-1 text-green-600 hover:text-green-700 font-medium"
+                  >
+                    <Plus className="h-3 w-3" />
+                    New Area
+                  </button>
+                )}
+              </div>
+
+              {isAddingArea ? (
+                <div className="p-3 bg-slate-50 rounded-lg border border-slate-200 space-y-3">
+                  <input
+                    type="text"
+                    placeholder="Area Name"
+                    value={newAreaName}
+                    onChange={(e) => setNewAreaName(e.target.value)}
+                    className="w-full px-3 py-2 text-sm border border-slate-300 rounded focus:ring-1 focus:ring-green-500 outline-none"
+                  />
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={handleCreateArea}
+                      disabled={!newAreaName}
+                      className="flex-1 bg-green-600 text-white text-xs py-2 rounded hover:bg-green-700 disabled:opacity-50"
+                    >
+                      Add Area
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsAddingArea(false);
+                        setNewAreaName('');
+                      }}
+                      className="flex-1 bg-white border border-slate-300 text-slate-600 text-xs py-2 rounded hover:bg-slate-50"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <select
+                  value={formData.areaId}
+                  onChange={(e) => setFormData({ ...formData, areaId: e.target.value })}
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                  disabled={!formData.cityId}
+                >
+                  <option value="">Select Area</option>
+                  {filteredAreas.map((area) => (
+                    <option key={area.id} value={area.id}>{area.name}</option>
+                  ))}
+                </select>
+              )}
             </div>
           </div>
 

@@ -1,0 +1,88 @@
+/* Venues Page Specific Styles */
+
+.filters-container {
+    margin-top: 20px;
+    width: 100%;
+    overflow: hidden;
+    /* Prevent horizontal scroll on page */
+}
+
+.filters-wrapper {
+    display: flex;
+    gap: 15px;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.city-selector {
+    padding: 10px 20px;
+    border-radius: 50px;
+    border: 1px solid #ddd;
+    font-size: 0.9rem;
+    outline: none;
+    background: white;
+    cursor: pointer;
+}
+
+.game-type-scroll {
+    display: flex;
+    gap: 10px;
+    overflow-x: auto;
+    padding-bottom: 5px;
+    -webkit-overflow-scrolling: touch;
+    /* Smooth scroll on iOS */
+    flex: 1;
+    /* Take remaining space */
+}
+
+/* Hide scrollbar for clean look but allow scrolling */
+.game-type-scroll::-webkit-scrollbar {
+    height: 4px;
+}
+
+.game-type-scroll::-webkit-scrollbar-thumb {
+    background: #eee;
+    border-radius: 2px;
+}
+
+.filter-pill {
+    padding: 8px 16px;
+    border-radius: 20px;
+    border: 1px solid #ddd;
+    background: white;
+    color: var(--color-black);
+    font-size: 0.85rem;
+    font-weight: 600;
+    transition: 0.2s;
+    white-space: nowrap;
+    /* Prevent line breaks */
+    flex-shrink: 0;
+    /* Prevent shrinking */
+}
+
+.filter-pill.active {
+    border-color: transparent;
+    background: var(--color-lime);
+    color: white;
+    /* Black on Lime as per theme? Or White on Lime? Let's stick to theme */
+    color: var(--color-black);
+}
+
+/* Mobile Adjustments */
+@media (max-width: 768px) {
+    .filters-wrapper {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+
+    .city-selector {
+        width: 100%;
+        /* Full width dropdown on mobile */
+    }
+
+    .game-type-scroll {
+        width: 100%;
+        padding-bottom: 10px;
+    }
+}

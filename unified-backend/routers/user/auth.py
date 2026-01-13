@@ -289,6 +289,6 @@ def login(form_data: Annotated[OAuth2PasswordRequestForm, Depends()], db: Sessio
     )
     return {"access_token": access_token, "token_type": "bearer"}
 
-@router.get("/profile", response_model=schemas.UserResponse)
+@router.get("/profile", response_model=schemas.User)
 def read_users_me(current_user: Annotated[models.User, Depends(get_current_user)]):
     return current_user

@@ -90,7 +90,7 @@ function Dashboard() {
             <div className="flex items-start justify-between">
               <div>
                 <p className="text-sm font-medium opacity-90">Weekly Sales</p>
-                <h3 className="mt-3 text-4xl font-bold">$15,000</h3>
+                <h3 className="mt-3 text-4xl font-bold">₹15,000</h3>
               </div>
               <div className="rounded-xl bg-white/20 p-3 backdrop-blur-sm">
                 <TrendingUp className="h-6 w-6" />

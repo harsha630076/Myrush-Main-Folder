@@ -59,9 +59,11 @@ const ReviewBookingScreen: React.FC = () => {
 
     // Calculate total cost: Use totalPrice from slot selection if available
     const calculateTotalCost = () => {
+        const players = numPlayers ? Number(numPlayers) : 1;
+
         // If we have selectedSlots and totalPrice from multi-slot selection
         if (selectedSlots && selectedSlots.length > 0 && totalPrice) {
-            let total = totalPrice;
+            let total = totalPrice * players;
 
             // Apply coupon discount if valid
             if (couponResult?.valid && couponResult?.final_amount !== undefined) {
@@ -71,6 +73,7 @@ const ReviewBookingScreen: React.FC = () => {
             console.log('REVIEW BOOKING - Multi-slot Total:', {
                 selectedSlotsCount: selectedSlots.length,
                 totalPrice: totalPrice,
+                players: players,
                 couponResult: couponResult,
                 finalTotal: total
             });
@@ -80,7 +83,6 @@ const ReviewBookingScreen: React.FC = () => {
 
         // Fallback: Single slot calculation (slot price * number of players)
         const price = slotPrice ? Number(slotPrice) : 0;
-        const players = numPlayers ? Number(numPlayers) : 2;
         let total = Math.floor(price * players);
 
         // Apply coupon discount if valid
@@ -179,14 +181,15 @@ const ReviewBookingScreen: React.FC = () => {
     };
 
     const calculateOriginalTotal = () => {
+        const players = numPlayers ? Number(numPlayers) : 1;
+
         // If we have selectedSlots with totalPrice, use that
         if (selectedSlots && selectedSlots.length > 0 && totalPrice) {
-            return totalPrice;
+            return totalPrice * players;
         }
 
         // Fallback: Single slot calculation
         const price = slotPrice ? Number(slotPrice) : 0;
-        const players = numPlayers ? Number(numPlayers) : 2;
         return Math.floor(price * players);
     };
 

@@ -161,7 +161,8 @@ from routers.user import (
     courts as user_courts,
     coupons as user_coupons,
     reviews as user_reviews,
-    notifications
+    notifications,
+    courts_ratings
 )
 
 # Include user routers with /api/user prefix
@@ -173,6 +174,7 @@ app.include_router(user_courts.router, prefix="/api/user", tags=["User Courts"])
 app.include_router(user_coupons.router, prefix="/api/user", tags=["User Coupons"])
 app.include_router(user_reviews.router, prefix="/api/user", tags=["User Reviews"])
 app.include_router(notifications.router, prefix="/api/user", tags=["User Notifications"])
+app.include_router(courts_ratings.router, prefix="/api/user", tags=["User Court Ratings"])
 
 print("\n" + "="*60)
 print("MYRUSH UNIFIED BACKEND")
