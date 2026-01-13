@@ -264,9 +264,6 @@ function AdminLogin() {
           )}
         </div>
       </div>
-      <div className="mt-4 text-center text-xs text-slate-400">
-        v1.1 (Hosted)
-      </div>
     </div>
   );
 }
