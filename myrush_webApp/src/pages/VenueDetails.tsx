@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { venuesApi } from '../api/venues';
 import type { Venue } from '../api/venues';
 import { courtsApi } from '../api/courts';
-import type { CourtRatings, CourtReview } from '../api/courts';
+import type { CourtRatings } from '../api/courts';
 import { TopNav } from '../components/TopNav';
 import './VenueDetails.css';
 
@@ -272,7 +272,7 @@ export const VenueDetails: React.FC = () => {
     // Venue Data State
     const [venue, setVenue] = useState<Venue | null>(null);
     const [ratings, setRatings] = useState<CourtRatings | null>(null);
-    const [reviews, setReviews] = useState<CourtReview[]>([]);
+    // const [reviews, setReviews] = useState<CourtReview[]>([]);
     const [loadingVenue, setLoadingVenue] = useState(true);
 
     // Slot Selection State
@@ -300,14 +300,14 @@ export const VenueDetails: React.FC = () => {
     const loadVenueData = async (venueId: string) => {
         setLoadingVenue(true);
         try {
-            const [venueRes, ratingsRes, reviewsRes] = await Promise.all([
+            const [venueRes, ratingsRes] = await Promise.all([
                 venuesApi.getVenueById(venueId),
                 courtsApi.getCourtRatings(venueId),
-                courtsApi.getCourtReviews(venueId, 5)
+                // courtsApi.getCourtReviews(venueId, 5)
             ]);
             if (venueRes.success && venueRes.data) setVenue(venueRes.data);
             if (ratingsRes.success) setRatings(ratingsRes.data);
-            if (reviewsRes.success) setReviews(reviewsRes.data.reviews);
+            // if (reviewsRes.success) setReviews(reviewsRes.data.reviews);
         } catch (error) { console.error(error); }
         finally { setLoadingVenue(false); }
     };
@@ -372,7 +372,7 @@ export const VenueDetails: React.FC = () => {
             <div className="venue-layout-grid">
                 {/* Left Column */}
                 <div className="content-left">
-                    <VenueHeader venue={venue} />
+                    <VenueHeader venue={venue} onBack={() => navigate(-1)} />
                     <VenueInfo
                         venue={venue}
                         rating={ratings?.average_rating || 0}

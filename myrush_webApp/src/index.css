@@ -1,12 +1,63 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@100..900&display=swap');
-
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+@config "../tailwind.config.js";
 
 @layer base {
+  :root {
+    --primary: #00D26A;
+  }
+
+  * {
+    @apply border-gray-200 outline-none;
+  }
+
+  html {
+    @apply scroll-smooth;
+  }
+
   body {
-    @apply font-inter text-base antialiased bg-whiten text-bodydark2;
+    @apply font-montserrat text-body antialiased bg-white text-black selection:bg-primary selection:text-black;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    @apply tracking-tight font-black uppercase;
+  }
+
+  h1 {
+    @apply text-h1;
+  }
+
+  h2 {
+    @apply text-h2;
+  }
+
+  h3 {
+    @apply text-h3;
+  }
+
+  h4 {
+    @apply text-h4;
+  }
+
+  h5 {
+    @apply text-h5;
+  }
+
+  h6 {
+    @apply text-h6;
+  }
+}
+
+@layer components {
+  .container-full {
+    @apply w-full px-6 md:px-12 lg:px-24;
+  }
+
+  .glass-card {
+    @apply bg-white/10 backdrop-blur-xl border border-white/20 shadow-premium;
   }
 }

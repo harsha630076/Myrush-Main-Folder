@@ -19,7 +19,7 @@ export const ProfileSetup: React.FC = () => {
         playing_style: ''
     });
     const [loading, setLoading] = useState(false);
-    const [error, setError] = useState('');
+    // const [error, setError] = useState('');
 
     const phone = location.state?.phone;
 
@@ -31,7 +31,7 @@ export const ProfileSetup: React.FC = () => {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
-        setError('');
+        // setError('');
 
         try {
             const response = await apiClient.post('/auth/verify-otp', {
@@ -46,10 +46,10 @@ export const ProfileSetup: React.FC = () => {
                 login(response.data.access_token);
                 navigate('/');
             } else {
-                setError('Failed to complete profile setup');
+                // setError('Failed to complete profile setup');
             }
         } catch (err: any) {
-            setError(err.response?.data?.detail || 'Failed to complete setup');
+            // setError(err.response?.data?.detail || 'Failed to complete setup');
         } finally {
             setLoading(false);
         }

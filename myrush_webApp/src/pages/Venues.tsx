@@ -4,7 +4,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { apiClient } from '../api/client';
 import { venuesApi } from '../api/venues';
 import { TopNav } from '../components/TopNav';
-import './Venues.css';
+import { Button } from '../components/ui/Button';
+// import { Card } from '../components/ui/Card';
 
 // --- Types ---
 interface Venue {
@@ -17,23 +18,19 @@ interface Venue {
     description: string;
     branch_name?: string;
     amenities?: string[];
-    rating?: number; // Optional
+    rating?: number;
 }
 
 // --- Icons ---
 const IconSearch = () => (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-    </svg>
+    <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
 );
 const IconMapPin = () => (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle>
-    </svg>
+    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
 );
-const IconFilter = () => (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>
-);
+// const IconFilter = () => (
+//    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>
+// );
 
 // --- Sub-Components ---
 
@@ -44,41 +41,57 @@ const VenueHero: React.FC<{
     setSelectedCity: (c: string) => void;
     cities: string[];
 }> = ({ searchTerm, setSearchTerm, selectedCity, setSelectedCity, cities }) => (
-    <div className="venues-hero-modern">
-        <div className="hero-overlay-modern"></div>
-        <div className="hero-content-modern">
+    <div className="relative pt-32 pb-20 px-6 bg-black overflow-hidden">
+        <div className="absolute inset-0 z-0">
+            <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-black/80 to-transparent z-10" />
+            <img
+                src="https://images.unsplash.com/photo-1541534741688-6078c6bfb5c5?q=80&w=2069"
+                alt="Venues Hero"
+                className="w-full h-full object-cover opacity-40 mix-blend-overlay"
+            />
+        </div>
+
+        <div className="relative z-10 max-w-7xl mx-auto text-center">
             <motion.h1
+                className="text-4xl md:text-6xl font-black text-white font-montserrat uppercase tracking-tight mb-4"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6 }}
             >
-                Find Your Perfect Court
+                Find Your <span className="text-primary">Arena</span>
             </motion.h1>
-            <p className="hero-subtitle">Book top-rated sports venues near you instantly.</p>
+            <p className="text-gray-400 text-lg mb-8 max-w-2xl mx-auto">Discover and book the best sports venues in your city.</p>
 
             <motion.div
-                className="search-bar-modern"
+                className="bg-white/10 backdrop-blur-md border border-white/20 p-2 rounded-2xl max-w-3xl mx-auto flex flex-col md:flex-row gap-2 shadow-2xl"
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ delay: 0.2 }}
             >
-                <div className="search-input-wrapper">
-                    <IconSearch />
+                <div className="flex-1 bg-white/5 rounded-xl px-4 py-3 flex items-center gap-3 border border-transparent focus-within:border-primary/50 transition-colors">
+                    <span className="text-gray-400"><IconSearch /></span>
                     <input
                         type="text"
                         placeholder="Search venues, sports..."
+                        className="bg-transparent border-none outline-none text-white placeholder-gray-500 w-full font-medium"
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                     />
                 </div>
-                <div className="divider-modern"></div>
-                <div className="location-select-wrapper">
-                    <IconMapPin />
-                    <select value={selectedCity} onChange={(e) => setSelectedCity(e.target.value)}>
-                        {cities.map(c => <option key={c} value={c}>{c}</option>)}
+                <div className="w-full md:w-64 bg-white/5 rounded-xl px-4 py-3 flex items-center gap-3 border border-transparent focus-within:border-primary/50 transition-colors relative">
+                    <span className="text-primary"><IconMapPin /></span>
+                    <select
+                        className="bg-transparent border-none outline-none text-white w-full font-bold appearance-none cursor-pointer"
+                        value={selectedCity}
+                        onChange={(e) => setSelectedCity(e.target.value)}
+                    >
+                        {cities.map(c => <option key={c} value={c} className="text-black">{c}</option>)}
                     </select>
+                    <div className="absolute right-4 pointer-events-none text-gray-400 text-xs">▼</div>
                 </div>
-                <button className="search-btn-modern">Search</button>
+                <Button variant="primary" className="h-full py-3 md:py-0 rounded-xl" onClick={() => { }}>
+                    Search
+                </Button>
             </motion.div>
         </div>
     </div>
@@ -92,31 +105,39 @@ const FilterSidebar: React.FC<{
     setSelectedBranch: (b: string) => void;
     branches: Array<{ id: string; name: string }>;
 }> = ({ selectedSport, setSelectedSport, sports, selectedBranch, setSelectedBranch, branches }) => (
-    <div className="filters-sidebar-modern">
-        <div className="filter-header">
-            <h3>Filters</h3>
-            <button className="clear-btn">Clear all</button>
+    <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 sticky top-24">
+        <div className="flex justify-between items-center mb-6">
+            <h3 className="font-bold text-lg font-montserrat uppercase">Filters</h3>
+            <button className="text-xs font-bold text-gray-400 hover:text-primary transition-colors" onClick={() => {
+                setSelectedSport('All');
+                setSelectedBranch('All');
+            }}>RESET</button>
         </div>
 
-        <div className="filter-group-modern">
-            <label>Sports</label>
-            <select
-                className="filter-select"
-                value={selectedSport}
-                onChange={(e) => setSelectedSport(e.target.value)}
-            >
+        <div className="mb-6">
+            <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Sport</label>
+            <div className="space-y-2">
                 {sports.map(sport => (
-                    <option key={sport} value={sport}>
-                        {sport}
-                    </option>
+                    <label key={sport} className={`flex items-center gap-3 p-2 rounded-lg cursor-pointer transition-all ${selectedSport === sport ? 'bg-black text-white' : 'hover:bg-gray-50 text-gray-600'}`}>
+                        <input
+                            type="radio"
+                            name="sport"
+                            value={sport}
+                            checked={selectedSport === sport}
+                            onChange={(e) => setSelectedSport(e.target.value)}
+                            className="hidden"
+                        />
+                        <span className="text-sm font-bold">{sport}</span>
+                        {selectedSport === sport && <span className="ml-auto text-primary">●</span>}
+                    </label>
                 ))}
-            </select>
+            </div>
         </div>
 
-        <div className="filter-group-modern">
-            <label>Branches</label>
+        <div>
+            <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Branch</label>
             <select
-                className="filter-select"
+                className="w-full bg-gray-50 border border-gray-200 rounded-lg p-2.5 text-sm font-medium focus:outline-none focus:border-black transition-colors"
                 value={selectedBranch}
                 onChange={(e) => setSelectedBranch(e.target.value)}
             >
@@ -132,41 +153,63 @@ const FilterSidebar: React.FC<{
 
 const VenueCard: React.FC<{ venue: Venue; onClick: () => void }> = ({ venue, onClick }) => (
     <motion.div
-        className="venue-card-modern"
         layout
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0 }}
+        className="group bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-100 cursor-pointer flex flex-col h-full"
         onClick={onClick}
     >
-        <div className="card-image-container">
+        <div className="relative h-48 overflow-hidden">
             <img
-                src={venue.photos?.[0] || '/court-placeholder.png'}
+                src={venue.photos?.[0] || 'https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?q=80&w=2070'}
                 alt={venue.court_name}
                 loading="lazy"
+                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
             />
-            <div className="card-badge">{venue.game_type}</div>
-            <button className="card-fav-btn">❤️</button>
+            <div className="absolute top-3 left-3 bg-black/80 backdrop-blur-sm text-white text-xs font-bold px-3 py-1 rounded-full border border-white/20">
+                {venue.game_type}
+            </div>
+            <button className="absolute top-3 right-3 w-8 h-8 rounded-full bg-white/90 flex items-center justify-center text-sm shadow-md hover:scale-110 transition-transform">
+                ❤️
+            </button>
+            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4 translate-y-2 group-hover:translate-y-0 transition-transform">
+                <p className="text-white text-xs font-bold flex items-center gap-1">
+                    <span className="text-primary"><IconMapPin /></span> {venue.location}
+                </p>
+            </div>
         </div>
-        <div className="card-details">
-            <div className="card-header-row">
-                <h3>{venue.court_name}</h3>
-                <div className="card-rating">⭐ {venue.rating || '4.5'}</div>
-            </div>
-            <p className="card-location">📍 {venue.location}</p>
 
-            <div className="card-amenities-row">
-                {venue.amenities?.slice(0, 3).map(a => (
-                    <span key={a} className="mini-tag">{a}</span>
-                ))}
-            </div>
-
-            <div className="card-footer-row">
-                <div className="price-block">
-                    <span className="price-val">₹{venue.prices}</span>
-                    <span className="price-unit">/hr</span>
+        <div className="p-5 flex flex-col flex-1">
+            <div className="flex justify-between items-start mb-2">
+                <h3 className="font-bold text-lg text-gray-900 leading-tight group-hover:text-primary transition-colors">{venue.court_name}</h3>
+                <div className="flex items-center gap-1 bg-gray-50 px-2 py-1 rounded-md">
+                    <span className="text-yellow-500 text-xs">⭐</span>
+                    <span className="text-xs font-bold text-gray-700">{venue.rating || '4.8'}</span>
                 </div>
-                <button className="book-btn-sm">Book</button>
+            </div>
+
+            <div className="flex flex-wrap gap-2 mb-4">
+                {venue.amenities?.slice(0, 3).map(a => (
+                    <span key={a} className="text-[10px] uppercase font-bold text-gray-500 bg-gray-100 px-2 py-1 rounded">{a}</span>
+                )) || <span className="text-[10px] uppercase font-bold text-gray-500 bg-gray-100 px-2 py-1 rounded">Parking</span>}
+                <span className="text-[10px] uppercase font-bold text-gray-400 bg-gray-50 px-2 py-1 rounded">+2</span>
+            </div>
+
+            <div className="mt-auto flex items-center justify-between pt-4 border-t border-gray-100">
+                <div>
+                    <span className="block text-xs text-gray-400 font-medium">Starting from</span>
+                    <div className="flex items-baseline gap-1">
+                        <span className="text-lg font-black text-gray-900">₹{venue.prices}</span>
+                        <span className="text-xs text-gray-500 font-medium">/hr</span>
+                    </div>
+                </div>
+                <Button variant="secondary" size="sm" className="rounded-lg shadow-none" onClick={(e) => {
+                    e.stopPropagation();
+                    onClick();
+                }}>
+                    Book
+                </Button>
             </div>
         </div>
     </motion.div>
@@ -219,7 +262,7 @@ export const Venues: React.FC = () => {
         setLoading(true);
         try {
             const res = await apiClient.get(`/courts?city=${selectedCity}`);
-            setVenues(Array.isArray(res.data) ? res.data : []); // Safety check
+            setVenues(Array.isArray(res.data) ? res.data : []);
             setFilteredVenues(Array.isArray(res.data) ? res.data : []);
         } catch (err) {
             console.error(err);
@@ -243,7 +286,7 @@ export const Venues: React.FC = () => {
     };
 
     return (
-        <div className="venues-page-modern">
+        <div className="min-h-screen bg-gray-50 font-inter">
             <TopNav />
 
             <VenueHero
@@ -254,8 +297,8 @@ export const Venues: React.FC = () => {
                 cities={CITIES}
             />
 
-            <div className="venues-layout-container">
-                <aside className="sidebar-area">
+            <div className="max-w-7xl mx-auto px-6 py-12 flex flex-col md:flex-row gap-8">
+                <aside className="w-full md:w-64 shrink-0">
                     <FilterSidebar
                         selectedSport={selectedSport}
                         setSelectedSport={setSelectedSport}
@@ -266,20 +309,28 @@ export const Venues: React.FC = () => {
                     />
                 </aside>
 
-                <main className="results-area">
-                    <div className="results-header">
-                        <h2>{filteredVenues.length} Venues in {selectedCity}</h2>
-                        <div className="sort-toggles">
-                            <button className="sort-btn-modern"><IconFilter /> Sort</button>
+                <main className="flex-1">
+                    <div className="flex justify-between items-center mb-6">
+                        <h2 className="text-2xl font-black text-gray-900 font-montserrat uppercase">{filteredVenues.length} Venues in {selectedCity}</h2>
+                        <div className="flex gap-2">
+                            {/* Add Sort Component if needed */}
                         </div>
                     </div>
 
                     {loading ? (
-                        <div className="loader-modern"></div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            {[1, 2, 3].map(n => (
+                                <div key={n} className="bg-white h-80 rounded-xl animate-pulse" />
+                            ))}
+                        </div>
                     ) : filteredVenues.length === 0 ? (
-                        <div className="empty-modern">No venues found matching your criteria.</div>
+                        <div className="text-center py-20 bg-white rounded-2xl border border-gray-100">
+                            <div className="text-4xl mb-4">🔍</div>
+                            <h3 className="text-xl font-bold text-gray-900 mb-2">No venues found</h3>
+                            <p className="text-gray-500">Try adjusting your filters or search term.</p>
+                        </div>
                     ) : (
-                        <div className="cards-grid-modern">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                             <AnimatePresence>
                                 {filteredVenues.map(venue => (
                                     <VenueCard

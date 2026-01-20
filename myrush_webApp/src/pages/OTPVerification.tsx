@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { apiClient } from '../api/client';
 import { useAuth } from '../context/AuthContext';
+import { Button } from '../components/ui/Button';
+import { Card } from '../components/ui/Card';
 
 export const OTPVerification: React.FC = () => {
     const [otp, setOtp] = useState('');
@@ -10,15 +12,14 @@ export const OTPVerification: React.FC = () => {
 
     const location = useLocation();
     const navigate = useNavigate();
-    const { login } = useAuth(); // eslint-disable-line @typescript-eslint/no-unused-vars
+    const { login } = useAuth();
 
     const phone = location.state?.phoneNumber || location.state?.phone;
 
     if (!phone) {
-        // If accessed directly without phone, redirect to login
         return (
-            <div style={{ background: 'var(--color-black)', height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <button onClick={() => navigate('/login')} className="premium-cta-btn">Go to Login</button>
+            <div className="min-h-screen bg-black flex items-center justify-center">
+                <Button onClick={() => navigate('/login')} variant="primary">Go to Login</Button>
             </div>
         );
     }
@@ -50,81 +51,41 @@ export const OTPVerification: React.FC = () => {
     };
 
     return (
-        <div style={{
-            minHeight: '100vh',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            background: 'var(--bg-secondary)',
-            position: 'relative',
-            overflow: 'hidden'
-        }}>
+        <div className="min-h-screen flex items-center justify-center bg-gray-50 relative overflow-hidden">
             {/* Background Gradient */}
-            <div style={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                width: '100%',
-                height: '100%',
-                background: 'radial-gradient(circle at 50% 50%, rgba(0, 200, 83, 0.05) 0%, transparent 50%)',
-                pointerEvents: 'none'
-            }}></div>
+            <div className="absolute inset-0 bg-gradient-to-br from-gray-50 to-primary/5 pointer-events-none" />
 
-            <div className="card" style={{
-                background: 'white',
-                border: '1px solid rgba(0,0,0,0.05)',
-                boxShadow: '0 10px 30px rgba(0,0,0,0.05)',
-                padding: '3rem',
-                maxWidth: '400px',
-                width: '100%',
-                zIndex: 10,
-                textAlign: 'center',
-                borderRadius: '16px'
-            }}>
-                <h1 style={{
-                    fontSize: '1.8rem',
-                    marginBottom: '1rem',
-                    color: 'var(--color-black)',
-                    fontFamily: 'var(--font-display)'
-                }}>
+            <Card className="w-full max-w-md p-8 z-10 mx-4">
+                <h1 className="text-3xl font-black text-black mb-4 font-montserrat text-center">
                     VERIFY OTP
                 </h1>
-                <p style={{ color: '#666', marginBottom: '2rem' }}>
-                    Enter the code sent to <span style={{ color: 'var(--color-black)', fontWeight: 'bold' }}>{phone}</span>
+                <p className="text-gray-500 mb-8 text-center">
+                    Enter the code sent to <span className="text-black font-bold">{phone}</span>
                 </p>
-                <p style={{ fontSize: '0.8em', color: '#999', marginBottom: '20px' }}>Try 12345 (dev)</p>
+                <p className="text-xs text-gray-400 mb-6 text-center">Try 12345 (dev)</p>
 
-                <form onSubmit={handleVerify}>
+                <form onSubmit={handleVerify} className="space-y-6">
                     <input
                         type="text"
                         placeholder="Enter 6-digit OTP"
                         value={otp}
                         onChange={(e) => setOtp(e.target.value)}
                         required
-                        style={{
-                            background: '#f9f9f9',
-                            border: '1px solid #eee',
-                            color: 'black',
-                            marginBottom: '1.5rem',
-                            padding: '16px',
-                            textAlign: 'center',
-                            letterSpacing: '0.5em',
-                            fontSize: '1.2rem',
-                            borderRadius: '8px'
-                        }}
+                        className="w-full bg-gray-50 border border-gray-200 text-black mb-6 p-4 text-center tracking-[0.5em] text-xl rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
                     />
-                    {error && <p style={{ color: '#ff4444', marginBottom: '10px' }}>{error}</p>}
 
-                    <button
+                    {error && <p className="text-danger text-sm text-center font-semibold">{error}</p>}
+
+                    <Button
                         type="submit"
                         disabled={loading}
-                        className="premium-cta-btn"
-                        style={{ width: '100%', padding: '16px', borderRadius: '50px', color: 'white' }}
+                        variant="primary"
+                        className="w-full py-4 rounded-full text-white font-bold"
                     >
                         {loading ? 'VERIFYING...' : 'CONFIRM ACCESS'}
-                    </button>
+                    </Button>
                 </form>
-            </div>
+            </Card>
         </div>
     );
 };

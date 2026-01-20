@@ -9,74 +9,76 @@ export default {
         fontFamily: {
             satoshi: ['Satoshi', 'sans-serif'],
             inter: ['Inter', 'sans-serif'],
+            montserrat: ['Montserrat', 'sans-serif'], // Added for headings
         },
         extend: {
             colors: {
                 current: 'currentColor',
                 transparent: 'transparent',
                 white: '#FFFFFF',
-                black: '#1C2434',
-                'black-2': '#010101',
+                // Original black and black-2 are overwritten by the new definitions below
+                // 'black': '#111827', // Darker navy-black for strong contrast
+                // 'black-2': '#1F2937',
+
+                // Brand Colors
+                primary: '#00D26A', // Rush Neon Green
+                'primary-hover': '#00B55B',
+                secondary: '#1A1D1F', // Onyx
+                accent: '#3C50E0', // Electric Blue
+
+                // Dark Surface
+                black: '#0A0A0B', // Deepest Black
+                'black-2': '#121214',
+
+                // Neutral / Surface Colors
                 body: '#64748B',
-                bodydark: '#AEB7C0',
+                bodydark: '#94A3B8',
                 bodydark1: '#DEE4EE',
                 bodydark2: '#8A99AF',
-                primary: '#3C50E0',
-                secondary: '#80CAEE',
+
                 stroke: '#E2E8F0',
-                gray: '#EFF4FB',
-                graydark: '#333A48',
-                'gray-2': '#F7F9FC',
-                'gray-3': '#FAFAFA',
+                // Original gray, gray-2, gray-3 are overwritten by the new definitions below
+                // gray: '#F3F4F6', // Light gray background
+                // 'gray-2': '#F9FAFB',
+                // 'gray-3': '#FAFAFA',
+
+                // Neutral
+                gray: '#F8F8F9', // Airy light background
+                'gray-2': '#EFEFF1',
+                'gray-3': '#D1D5DB',
+
                 whiten: '#F1F5F9',
                 whiter: '#F5F7FD',
+
                 boxdark: '#24303F',
                 boxdark2: '#1A222C',
-                strokedark: '#2E3A47',
-                formstrokedark: '#3d4d60',
-                forminput: '#1d2a39',
-                meta: '#20C55D',
-                success: '#219653',
-                danger: '#D34053',
-                warning: '#FFA70B',
+
+                success: '#00D26A',
+                danger: '#EF4444',
+                warning: '#F59E0B',
             },
             fontSize: {
-                'title-xxl': ['44px', '55px'],
-                'title-xl': ['36px', '45px'],
-                'title-xl2': ['33px', '45px'],
-                'title-lg': ['28px', '35px'],
-                'title-md': ['24px', '30px'],
-                'title-sm2': ['22px', '28px'],
-                'title-xsm': ['20px', '24px'],
+                // FLUID TYPOGRAPHY (10/10 SCALE)
+                'display': ['clamp(3.5rem, 10vw, 9rem)', { lineHeight: '0.85', fontWeight: '900', letterSpacing: '-0.05em' }],
+                'h1': ['clamp(2.5rem, 8vw, 5rem)', { lineHeight: '1', fontWeight: '900', letterSpacing: '-0.04em' }],
+                'h2': ['clamp(2rem, 6vw, 3.5rem)', { lineHeight: '1.1', fontWeight: '800', letterSpacing: '-0.03em' }],
+                'h3': ['clamp(1.5rem, 4vw, 2.5rem)', { lineHeight: '1.2', fontWeight: '700', letterSpacing: '-0.02em' }],
+                'h4': ['1.75rem', { lineHeight: '1.3', fontWeight: '700' }],
+                'h5': ['1.25rem', { lineHeight: '1.4', fontWeight: '600' }],
+                'h6': ['1.125rem', { lineHeight: '1.5', fontWeight: '600' }],
+                'body-lg': ['clamp(1.125rem, 2vw, 1.5rem)', { lineHeight: '1.6', fontWeight: '400' }],
+                'body': ['1rem', { lineHeight: '1.6', fontWeight: '400' }],
+                'caption': ['0.75rem', { lineHeight: '1.5', fontWeight: '600', letterSpacing: '0.1em' }],
             },
             spacing: {
-                4.5: '1.125rem',
-                5.5: '1.375rem',
-                6.5: '1.625rem',
-                7.5: '1.875rem',
-                8.5: '2.125rem',
-                9.5: '2.375rem',
-                10.5: '2.625rem',
-                11.5: '2.875rem',
-                12.5: '3.125rem',
-                13.5: '3.375rem',
-                14.5: '3.625rem',
-                15.5: '3.875rem',
-                16.5: '4.125rem',
-                17.5: '4.375rem',
-                18.5: '4.625rem',
-                19.5: '4.875rem',
-                20.5: '5.125rem',
-                21.5: '5.375rem',
-                22.5: '5.625rem',
-                23.5: '5.875rem',
-                24.5: '6.125rem',
-                25.5: '6.375rem',
-                26.5: '6.625rem',
-                27.5: '6.875rem',
-                28.5: '7.125rem',
-                29.5: '7.375rem',
-                30.5: '7.625rem',
+                // Strict 8px increment system
+                '18': '4.5rem',
+                '22': '5.5rem',
+                '32': '8rem',
+                '40': '10rem',
+                '48': '12rem',
+                '60': '15rem',
+                '72': '18rem',
             },
             maxWidth: {
                 230: '230px',
@@ -93,17 +95,22 @@ export default {
                 9: '9',
                 1: '1',
             },
-            boxShadow: {
-                default: '0px 8px 13px -3px rgba(0, 0, 0, 0.07)',
-                1: '0px 1px 3px rgba(0, 0, 0, 0.08)',
-                2: '0px 1px 4px rgba(0, 0, 0, 0.12)',
-                3: '0px 1px 5px rgba(0, 0, 0, 0.2)',
-                4: '0px 4px 10px rgba(0, 0, 0, 0.12)',
-                5: '0px 1px 2px rgba(0, 0, 0, 0.2)',
-                6: '0px 4px 30px rgba(0, 0, 0, 0.08)',
-                7: '0px 4px 6px -2px rgba(0, 0, 0, 0.01)',
-                8: '0px 10px 20px rgba(0, 0, 0, 0.04)',
+            borderRadius: {
+                'xl': '1rem',
+                '2xl': '1.5rem',
+                '3xl': '2.5rem', // Extra rounded for premium feel
+                'full': '9999px',
             },
+            boxShadow: {
+                'premium': '0 20px 50px -12px rgba(0, 0, 0, 0.1)',
+                'premium-hover': '0 30px 60px -12px rgba(0, 0, 0, 0.15)',
+                'glow': '0 0 20px rgba(0, 210, 106, 0.3)',
+                'glow-strong': '0 0 40px rgba(0, 210, 106, 0.5)',
+            },
+            backgroundImage: {
+                'glass-gradient': 'linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05))',
+                'dark-gradient': 'linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0.8) 100%)',
+            }
         },
     },
     plugins: [],

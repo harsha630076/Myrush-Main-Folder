@@ -1,6 +1,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { LandingPage } from './pages/LandingPage';
+import { Academy } from './pages/Academy';
 import { Dashboard } from './pages/Dashboard';
 import { Login } from './pages/Login';
 import { OTPVerification } from './pages/OTPVerification';
@@ -30,6 +31,7 @@ function App() {
       <Router>
         <Routes>
           <Route path="/" element={<LandingPage />} />
+          <Route path="/academy" element={<Academy />} />
           <Route path="/login" element={<Login />} />
           <Route path="/verify-otp" element={<OTPVerification />} />
           <Route path="/setup-profile" element={<ProfileSetup />} />

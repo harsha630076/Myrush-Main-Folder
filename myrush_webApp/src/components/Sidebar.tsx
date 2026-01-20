@@ -1,5 +1,5 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { NavLink, useLocation } from 'react-router-dom';
+import { useEffect, useRef, useState } from 'react';
+import { NavLink } from 'react-router-dom';
 import { RxDashboard } from "react-icons/rx";
 import { BsCalendar2Event } from "react-icons/bs";
 import { FiUser } from "react-icons/fi";
@@ -12,14 +12,14 @@ interface SidebarProps {
 }
 
 const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
-    const location = useLocation();
-    const { pathname } = location;
+    // const location = useLocation();
+    // const { pathname } = location;
 
     const trigger = useRef<HTMLButtonElement | null>(null);
     const sidebar = useRef<HTMLDivElement | null>(null);
 
     const storedSidebarExpanded = localStorage.getItem('sidebar-expanded');
-    const [sidebarExpanded, setSidebarExpanded] = useState(
+    const [sidebarExpanded] = useState(
         storedSidebarExpanded === null ? false : storedSidebarExpanded === 'true'
     );
 

@@ -1,185 +1,405 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import './LandingPage.css';
+import { motion, type Variants, useScroll, useTransform } from 'framer-motion';
+import { Button } from '../components/ui/Button';
+import { FaInstagram, FaYoutube, FaLinkedin, FaTwitter, FaArrowRight } from 'react-icons/fa';
+// import { Card } from '../components/ui/Card';
+
+const fadeInUp: Variants = {
+    hidden: { opacity: 0, y: 30 },
+    visible: (i: number) => ({
+        opacity: 1,
+        y: 0,
+        transition: { delay: i * 0.1, duration: 0.5, ease: "easeOut" }
+    })
+};
+
+const marqueeVariants: Variants = {
+    animate: {
+        x: [0, -1000],
+        transition: {
+            x: {
+                repeat: Infinity,
+                repeatType: "loop",
+                duration: 20,
+                ease: "linear",
+            },
+        },
+    },
+};
 
 export const LandingPage: React.FC = () => {
     const navigate = useNavigate();
+    const { scrollY } = useScroll();
+    // const headersOpacity = useTransform(scrollY, [0, 100], [0, 1]);
+    const heroY = useTransform(scrollY, [0, 500], [0, 150]);
 
     const services = [
         {
             title: 'Rush Arena',
-            description: 'Welcome to Rush Arena, a premier chain of sports arenas with 9 centers, offering world-class facilities. Located in Bengaluru, Hyderabad and Chennai.',
-            cta: 'Our Locations',
+            description: 'World-class facilities across 9 centers. Premium turfs, lighting, and amenities.',
+            icon: '🏟️',
             image: 'https://images.unsplash.com/photo-1529900748604-07564a03e7a6?q=80&w=2070',
-            link: '/dashboard'
+            link: '/venues',
+            colSpan: 'md:col-span-2'
         },
         {
-            title: 'Rush Academy',
-            description: "Discover Rush Academy, Bengaluru's fastest-growing football academy, empowering aspiring players across the city. Our teams excel in senior and junior divisions of the association league.",
-            cta: 'Book A Free Trial',
+            title: 'Academy',
+            description: "Bengaluru's fastest-growing football academy. Train with the best.",
+            icon: '🎓',
             image: 'https://images.unsplash.com/photo-1624880357913-a8539238245b?q=80&w=2070',
-            link: '/dashboard'
+            link: '/academy',
+            colSpan: 'md:col-span-1'
         },
         {
-            title: 'Corporate Engagement',
-            description: 'Boost team spirit and productivity with our dynamic employee engagement through sports programs for corporates and businesses',
-            cta: 'Know More',
-            image: 'https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?q=80&w=2070',
-            link: '/dashboard'
-        },
-        {
-            title: 'Rush Tournaments',
-            description: 'Experience the thrill of competition and camaraderie in our exciting tournaments & leagues open for all to join and participate',
-            cta: 'Upcoming Tournaments',
+            title: 'Tournaments',
+            description: 'Compete in high-stakes leagues and tournaments.',
+            icon: '🏆',
             image: 'https://images.unsplash.com/photo-1517466787929-bc90951d0974?q=80&w=2086',
-            link: '/dashboard'
+            link: '/dashboard',
+            colSpan: 'md:col-span-1'
+        },
+        {
+            title: 'Corporate',
+            description: 'Team building and sports events for businesses.',
+            icon: '🤝',
+            image: 'https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?q=80&w=2070',
+            link: '/dashboard',
+            colSpan: 'md:col-span-2'
         }
     ];
 
     return (
-        <div className="landing-page">
-            {/* Navigation Header */}
-            <header className="landing-nav">
-                <div className="nav-container">
-                    <div className="logo">
-                        <img src="/Rush-logo.webp" alt="Rush" className="rush-logo-img" />
+        <div className="min-h-screen bg-gray-50 font-inter overflow-x-hidden selection:bg-primary selection:text-black">
+            {/* Sticky Navigation */}
+            <motion.nav
+                className="fixed top-0 left-0 right-0 z-50 bg-black/80 backdrop-blur-md border-b border-white/10"
+                initial={{ y: -100 }}
+                animate={{ y: 0 }}
+                transition={{ duration: 0.5 }}
+            >
+                <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
+                    <div className="flex items-center gap-2 cursor-pointer" onClick={() => window.scrollTo(0, 0)}>
+                        <img src="/Rush-logo.webp" alt="Rush" className="h-35 w-auto" />
                     </div>
-                    <nav className="nav-links">
-                        <a href="#home">HOME</a>
-                        <a href="#academy">ACADEMY</a>
-                        <a href="#arena">RUSH ARENA</a>
-                        <a href="#pickleball">PICKLEBALL</a>
-                        <a href="#corporate">CORPORATE ENGAGEMENT</a>
-                    </nav>
-                    <button className="nav-book-btn" onClick={() => navigate('/dashboard')}>
-                        Book Now
-                    </button>
-                </div>
-            </header>
-
-            {/* Hero Section */}
-            <section className="hero-section" id="home">
-                <div className="hero-diagonal-bg"></div>
-                <div className="hero-content-wrapper">
-                    <div className="hero-text">
-                        <motion.h1
-                            initial={{ opacity: 0, x: -50 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            transition={{ duration: 0.8 }}
-                        >
-                            For all things <span className="highlight">sport.</span>
-                        </motion.h1>
-                        <motion.p
-                            className="hero-subtitle"
-                            initial={{ opacity: 0, x: -30 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            transition={{ duration: 0.8, delay: 0.2 }}
-                        >
-                            Arena. Academy. Events.
-                        </motion.p>
-                        <motion.button
-                            className="hero-cta"
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ duration: 0.6, delay: 0.4 }}
-                            onClick={() => navigate('/dashboard')}
-                        >
-                            Book a Court
-                        </motion.button>
-                    </div>
-                    <div className="hero-image">
-                        <img
-                            src="https://images.unsplash.com/photo-1579952363873-27f3bade9f55?q=80&w=2035"
-                            alt="Athletes in action"
-                        />
-                    </div>
-                </div>
-            </section>
-
-            {/* Services Section */}
-            <section className="services-section" id="arena">
-                <div className="services-grid">
-                    {services.map((service, index) => (
-                        <motion.div
-                            key={index}
-                            className="service-card"
-                            initial={{ opacity: 0, y: 30 }}
-                            whileInView={{ opacity: 1, y: 0 }}
-                            viewport={{ once: true }}
-                            transition={{ duration: 0.6, delay: index * 0.15 }}
-                        >
-                            <div className="service-image">
-                                <img src={service.image} alt={service.title} />
-                                <div className="service-overlay"></div>
-                            </div>
-                            <div className="service-content">
-                                <h3>{service.title}</h3>
-                                <p>{service.description}</p>
-                                <button
-                                    className="service-cta"
-                                    onClick={() => navigate(service.link)}
-                                >
-                                    {service.cta}
-                                </button>
-                            </div>
-                        </motion.div>
-                    ))}
-                </div>
-            </section>
-
-            {/* Uncouch Branding Section */}
-            <section className="uncouch-section">
-                <div className="uncouch-content">
-                    <h2 className="uncouch-text">uncouch.</h2>
-                </div>
-            </section>
-
-            {/* Top Clients Section */}
-            <section className="clients-section">
-                <h2>Our Top Clients</h2>
-                <div className="clients-marquee">
-                    <div className="marquee-content">
-                        {['Microsoft', 'Google', 'Amazon', 'Infosys', 'Wipro', 'TCS', 'Accenture', 'Deloitte'].map((client, i) => (
-                            <div key={i} className="client-logo">{client}</div>
+                    <div className="hidden md:flex items-center gap-8">
+                        {['Academy', 'Arena', 'Corporate', 'Events'].map((item) => (
+                            <a
+                                key={item}
+                                href={`#${item.toLowerCase()}`}
+                                className="text-sm font-bold text-gray-300 hover:text-primary uppercase tracking-wider transition-colors"
+                            >
+                                {item}
+                            </a>
                         ))}
                     </div>
+                    <Button
+                        variant="primary"
+                        onClick={() => navigate('/login')}
+                        className="font-bold bg-primary text-black hover:bg-white hover:text-black uppercase tracking-wider text-sm px-10 py-3 min-w-[150px] shadow-[0_0_15px_rgba(0,210,106,0.5)] hover:shadow-[0_0_25px_rgba(0,210,106,0.6)]"
+                    >
+                        Book Now
+                    </Button>
+                </div>
+            </motion.nav>
+
+            {/* HERO SECTION */}
+            <section className="relative h-screen flex items-center justify-center overflow-hidden bg-black">
+                <motion.div style={{ y: heroY }} className="absolute inset-0 z-0">
+                    <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent z-10" />
+                    <img
+                        src="https://images.unsplash.com/photo-1579952363873-27f3bade9f55?q=80&w=2035"
+                        alt="Hero"
+                        className="w-full h-full object-cover opacity-60"
+                    />
+                </motion.div>
+
+                <div className="relative z-20 text-center px-4 max-w-5xl mx-auto mt-20">
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ duration: 1 }}
+                        className="inline-block mb-6 px-4 py-1.5 rounded-full border border-primary/30 bg-primary/10 backdrop-blur-md text-xs font-bold text-primary tracking-[0.2em] uppercase"
+                    >
+                        The Ultimate Sports Platform
+                    </motion.div>
+
+                    <motion.h1
+                        className="text-5xl md:text-7xl font-black font-montserrat tracking-tighter text-white mb-8 uppercase leading-none"
+                        initial={{ opacity: 0, y: 50 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.8, delay: 0.2 }}
+                    >
+                        Play <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-green-400">Like</span><br />
+                        A Pro
+                    </motion.h1>
+
+                    <motion.div
+                        initial={{ opacity: 0, y: 30 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.8, delay: 0.4 }}
+                        className="flex flex-col md:flex-row items-center justify-center gap-6"
+                    >
+                        <Button
+                            variant="primary"
+                            size="lg"
+                            onClick={() => navigate('/login')}
+                            className="bg-primary text-black hover:bg-white hover:text-black text-lg px-12 py-5 min-w-[240px] uppercase tracking-wider font-montserrat font-black shadow-[0_0_20px_rgba(0,210,106,0.5)] hover:shadow-[0_0_30px_rgba(0,210,106,0.6)]"
+                        >
+                            Book a Court
+                        </Button>
+                        <Button
+                            className="bg-transparent border-2 border-white text-white hover:bg-white hover:text-black text-lg px-12 py-5 min-w-[240px] uppercase tracking-wider font-montserrat font-black rounded-full transition-all duration-300 flex items-center justify-center gap-3 group"
+                        >
+                            Explore Venues <FaArrowRight className="group-hover:translate-x-1 transition-transform" />
+                        </Button>
+                    </motion.div>
                 </div>
             </section>
 
-            {/* Contact Footer */}
-            <footer className="landing-footer">
-                <div className="footer-content">
-                    <div className="footer-main">
-                        <div className="footer-cta">
-                            <h2>Stay in the loop</h2>
-                            <p>Sign up to book your court and receive updates.</p>
-                            <button
-                                className="footer-signup-btn"
-                                onClick={() => navigate('/login')}
-                            >
-                                Sign Up
-                            </button>
+            {/* MARQUEE STRIP */}
+            <div className="bg-primary overflow-hidden py-4 z-30 relative shadow-glow -rotate-1 scale-105 border-y-4 border-black">
+                <motion.div
+                    className="flex whitespace-nowrap"
+                    variants={marqueeVariants}
+                    animate="animate"
+                >
+                    {[...Array(10)].map((_, i) => (
+                        <span key={i} className="text-black font-black text-3xl mx-8 uppercase font-montserrat italic tracking-tighter flex items-center gap-4">
+                            RUSH ARENA • ACADEMY • TOURNAMENTS • CORPORATE •
+                        </span>
+                    ))}
+                </motion.div>
+            </div>
+
+            {/* SERVICES GRID */}
+            {/* SERVICES GRID */}
+            {/* SERVICES GRID */}
+            <section className="pt-60 md:pt-80 pb-60 px-0 bg-gray-50 bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] [background-size:16px_16px] overflow-hidden">
+                <div className="max-w-[1600px] mx-auto w-full">
+                    <div className="mb-24 flex flex-col md:flex-row items-end justify-between gap-8 px-6 md:px-12">
+                        <div className="text-left max-w-2xl">
+                            <h2 className="text-4xl md:text-6xl font-black text-black font-montserrat uppercase leading-none mb-4">
+                                Everything <span className="text-primary">Sport.</span>
+                            </h2>
+                            <p className="text-gray-500 text-lg font-medium pl-4 border-l-4 border-primary/50">
+                                From casual games to professional training, we have got you covered.
+                            </p>
                         </div>
-                        <div className="footer-contact">
-                            <h3>Addrush Sports Private Limited</h3>
-                            <p className="address">
-                                # 643/2, 12th Main Rd, 2nd Block, Rajajinagar,<br />
-                                Bengaluru, Karnataka 560010
-                            </p>
-                            <p className="email">
-                                <a href="mailto:harsha@myrush.in">harsha@myrush.in</a>
-                            </p>
-                            <p className="phone">+91 7624898999</p>
+                        <button
+                            onClick={() => navigate('/venues')}
+                            className="hidden md:flex items-center gap-2 group text-black font-bold uppercase tracking-wider text-sm hover:text-primary transition-colors pb-2 border-b-2 border-transparent hover:border-primary"
+                        >
+                            View All Facilities
+                            <span className="group-hover:translate-x-1 transition-transform">→</span>
+                        </button>
+                    </div>
+
+                    {/* Horizontal Scroll Container */}
+                    <div className="w-full overflow-x-auto pb-12 hide-scrollbar snap-x snap-mandatory">
+                        <div className="flex gap-6 px-6 md:px-12 w-max">
+                            {services.map((service, i) => (
+                                <motion.div
+                                    key={i}
+                                    className="group relative overflow-hidden rounded-[2.5rem] bg-black h-[550px] w-[380px] md:w-[400px] flex-shrink-0 shadow-2xl cursor-pointer snap-center"
+                                    custom={i}
+                                    variants={fadeInUp}
+                                    initial="hidden"
+                                    whileInView="visible"
+                                    viewport={{ once: true, margin: "-50px" }}
+                                    onClick={() => navigate(service.link)}
+                                >
+                                    <div className="absolute inset-0">
+                                        <img
+                                            src={service.image}
+                                            alt={service.title}
+                                            className="w-full h-full object-cover opacity-80 transition-transform duration-700 group-hover:scale-105"
+                                        />
+                                    </div>
+                                    <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent opacity-90" />
+
+                                    <div className="absolute inset-0 p-10 flex flex-col justify-between">
+                                        <div className="flex justify-between items-start">
+                                            <div className="w-16 h-16 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center text-3xl text-white border border-white/20">
+                                                {service.icon}
+                                            </div>
+                                            <div className="w-12 h-12 rounded-full bg-primary text-black flex items-center justify-center opacity-0 -translate-y-4 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300 shadow-lg font-bold text-xl">
+                                                ↗
+                                            </div>
+                                        </div>
+
+                                        <div className="transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300">
+                                            <h3 className="text-4xl font-black text-white font-montserrat uppercase italic mb-4 leading-[0.9]">
+                                                {service.title}
+                                            </h3>
+                                            <p className="text-gray-200 text-lg font-medium leading-relaxed max-w-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300 delay-75 pl-4 border-l-2 border-primary">
+                                                {service.description}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </motion.div>
+                            ))}
                         </div>
                     </div>
-                    <div className="footer-bottom">
-                        <div className="social-links">
-                            <a href="https://instagram.com" target="_blank" rel="noopener noreferrer">Instagram</a>
-                            <a href="https://youtube.com" target="_blank" rel="noopener noreferrer">YouTube</a>
-                            <a href="https://linkedin.com" target="_blank" rel="noopener noreferrer">LinkedIn</a>
+
+                    {/* CSS to hide scrollbar */}
+                    <style>{`
+                        .hide-scrollbar::-webkit-scrollbar {
+                            display: none;
+                        }
+                        .hide-scrollbar {
+                            -ms-overflow-style: none;
+                            scrollbar-width: none;
+                        }
+                    `}</style>
+                </div>
+            </section>
+
+            {/* CLIENTS SECTION */}
+            <section className="py-60 bg-white overflow-hidden relative">
+                <div className="container mx-auto px-4 text-center mb-16">
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.6 }}
+                        className="flex flex-col items-center"
+                    >
+                        <h3 className="text-3xl md:text-4xl font-black text-black font-montserrat uppercase tracking-tight mb-2">
+                            Trusted by <span className="text-primary">Industry Leaders</span>
+                        </h3>
+                        <p className="text-gray-500 text-base max-w-2xl mx-auto text-center">
+                            Partnering with the world's most innovative companies to elevate sports culture.
+                        </p>
+                    </motion.div>
+                </div>
+
+                {/* Gradient Masks for Premium Feel */}
+                <div className="absolute inset-y-0 left-0 w-32 bg-gradient-to-r from-white to-transparent z-20 pointer-events-none" />
+                <div className="absolute inset-y-0 right-0 w-32 bg-gradient-to-l from-white to-transparent z-20 pointer-events-none" />
+
+                <div className="flex flex-col gap-16 relative z-10 w-full">
+                    {/* Row 1: Scrolling Left */}
+                    <motion.div
+                        className="flex gap-20 items-center px-10 min-w-max"
+                        animate={{ x: [0, -2000] }}
+                        transition={{ repeat: Infinity, duration: 60, ease: "linear" }}
+                    >
+                        {[...Array(4)].map((_, setIndex) => (
+                            [
+                                { name: 'WeWork', logo: 'https://images.squarespace-cdn.com/content/v1/6489a5657044a44b13bae65f/2d0b91a9-133a-49ba-b4d9-66daa96deb3b/we_avatar_qr.bca8f0cdca8104e6ac293e4b95862f8c.png?format=300w' },
+                                { name: 'Amazon', logo: 'https://images.squarespace-cdn.com/content/v1/6489a5657044a44b13bae65f/a3016f65-d5c7-4462-80d7-377435224838/Amazon-logo-meaning.jpg?format=500w' },
+                                { name: 'AIFF', logo: 'https://images.squarespace-cdn.com/content/v1/6489a5657044a44b13bae65f/5a575ade-272e-4e66-a038-641d381953fd/All_India_Football_Federation_logo.png' },
+                                { name: 'Kotak', logo: 'https://images.squarespace-cdn.com/content/v1/6489a5657044a44b13bae65f/d338c19b-08f1-490c-8d2a-583817365eed/1200px-Kotak_Mutual_Fund_logo.svg+%282%29.png' },
+                                { name: 'Hosachiguru', logo: 'https://images.squarespace-cdn.com/content/v1/6489a5657044a44b13bae65f/93e041cc-f9c3-4965-a3b6-0203a31f936d/Hosachiguru.png' },
+                            ].map((client, i) => (
+                                <div key={`row1-${setIndex}-${i}`} className="opacity-80 hover:opacity-100 transition-opacity duration-300">
+                                    <img
+                                        src={client.logo}
+                                        alt={client.name}
+                                        className="h-16 w-auto object-contain mix-blend-multiply transition-all duration-300"
+                                    />
+                                </div>
+                            ))
+                        ))}
+                    </motion.div>
+
+                    {/* Row 2: Scrolling Right */}
+                    <motion.div
+                        className="flex gap-20 items-center px-10 min-w-max"
+                        initial={{ x: -2000 }}
+                        animate={{ x: 0 }}
+                        transition={{ repeat: Infinity, duration: 60, ease: "linear" }}
+                    >
+                        {[...Array(4)].map((_, setIndex) => (
+                            [
+                                { name: 'Bengaluru FC', logo: 'https://images.squarespace-cdn.com/content/v1/6489a5657044a44b13bae65f/d742993b-fd42-424b-986d-291fb798d44a/Bengaluru_FC_logo.svg+%281%29.png' },
+                                { name: 'SILA', logo: 'https://images.squarespace-cdn.com/content/v1/6489a5657044a44b13bae65f/d2c6d315-f797-4251-a279-4b3c59d3740d/SILA+Logo+Grey.png' },
+                                { name: 'Applied', logo: 'https://images.squarespace-cdn.com/content/v1/6489a5657044a44b13bae65f/afe2353e-b057-435f-b0f4-026b5145efe7/Appliedlogo_blue_102021%5B1953674%5D.png' },
+                                { name: 'Torpedoes', logo: 'https://images.squarespace-cdn.com/content/v1/6489a5657044a44b13bae65f/628119dc-b0cd-43f0-b35b-bbad924c35c3/Bengaluru_Torpedoes_pvl_team_logo-2.png' },
+                            ].map((client, i) => (
+                                <div key={`row2-${setIndex}-${i}`} className="opacity-80 hover:opacity-100 transition-opacity duration-300">
+                                    <img
+                                        src={client.logo}
+                                        alt={client.name}
+                                        className="h-16 w-auto object-contain mix-blend-multiply transition-all duration-300"
+                                    />
+                                </div>
+                            ))
+                        ))}
+                    </motion.div>
+                </div>
+            </section>
+
+            {/* UNCOUCH CTA */}
+            <section className="py-80 bg-black text-center px-4 relative overflow-hidden flex flex-col justify-center items-center min-h-[70vh]">
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-primary/20 rounded-full blur-[150px] pointer-events-none" />
+                <div className="relative z-10 max-w-6xl mx-auto flex flex-col items-center">
+                    <motion.h2
+                        className="text-6xl md:text-9xl font-black text-white font-montserrat italic mb-8 leading-none"
+                        initial={{ opacity: 0, scale: 0.8 }}
+                        whileInView={{ opacity: 1, scale: 1 }}
+                        transition={{ duration: 0.8 }}
+                    >
+                        UNCOUCH.
+                    </motion.h2>
+                    <p className="text-gray-400 text-2xl md:text-3xl mb-12 font-light max-w-4xl mx-auto leading-relaxed text-center">
+                        Stop watching from the sidelines.<br />
+                        <span className="text-white font-medium">Start playing today. Join thousands of players in the Rush community today.</span>
+                    </p>
+                    <Button
+                        variant="primary"
+                        size="lg"
+                        className="text-2xl px-16 py-8 min-w-[320px] rounded-full font-black shadow-glow hover:scale-105 transition-transform"
+                        onClick={() => navigate('/login')}
+                    >
+                        Join the Movement
+                    </Button>
+                </div>
+            </section>
+
+            {/* FOOTER */}
+            <footer className="bg-black border-t border-white/10 pt-80 pb-40 w-full px-6">
+                <div className="w-full grid grid-cols-1 md:grid-cols-4 gap-12 mb-20 text-gray-400">
+                    <div className="col-span-1 md:col-span-2">
+                        <img src="/Rush-logo.webp" alt="Rush" className="h-28 mb-8 object-contain" />
+                        <p className="max-w-xl mb-8 text-base leading-relaxed text-gray-500 font-light">
+                            The premier destination for sports enthusiasts. Book world-class venues, join elite academies, and compete in high-stakes tournaments.
+                        </p>
+                        <div className="flex gap-6">
+                            <a href="#" className="text-gray-400 hover:text-primary transition-colors transform hover:scale-110 duration-200">
+                                <FaInstagram size={24} />
+                            </a>
+                            <a href="#" className="text-gray-400 hover:text-red-500 transition-colors transform hover:scale-110 duration-200">
+                                <FaYoutube size={24} />
+                            </a>
+                            <a href="#" className="text-gray-400 hover:text-blue-500 transition-colors transform hover:scale-110 duration-200">
+                                <FaLinkedin size={24} />
+                            </a>
+                            <a href="#" className="text-gray-400 hover:text-blue-400 transition-colors transform hover:scale-110 duration-200">
+                                <FaTwitter size={24} />
+                            </a>
                         </div>
-                        <p className="copyright">© 2026 Addrush Sports Private Limited. All rights reserved.</p>
+                    </div>
+                    <div className="col-span-1 md:col-span-1 pl-12">
+                        <h4 className="text-white font-bold uppercase tracking-widest mb-12 text-lg">Explore</h4>
+                        <ul className="space-y-6 text-xl">
+                            {['Academy', 'Arena', 'Corporate', 'Tournaments', 'Events', 'Careers'].map(item => (
+                                <li key={item}><a href="#" className="hover:text-primary transition-colors block text-gray-500 hover:tracking-wide duration-200">{item}</a></li>
+                            ))}
+                        </ul>
+                    </div>
+                    <div className="col-span-1 md:col-span-1">
+                        <h4 className="text-white font-bold uppercase tracking-widest mb-12 text-lg">Contact</h4>
+                        <p className="mb-6 text-xl leading-relaxed text-gray-500"># 643/2, 12th Main Rd,<br />Rajajinagar, Bengaluru</p>
+                        <p className="mb-8 text-xl hover:text-primary cursor-pointer transition-colors text-gray-500">harsha@myrush.in</p>
+                        <p className="text-white font-bold text-3xl">+91 7624898999</p>
+                    </div>
+                </div>
+                <div className="w-full border-t border-white/10 pt-10 pb-8 flex flex-col md:flex-row justify-between items-center text-sm text-gray-600">
+                    <p className="font-medium tracking-wide">© 2026 Addrush Sports Private Limited.</p>
+                    <div className="flex gap-8 mt-4 md:mt-0">
+                        <a href="#" className="hover:text-gray-400 transition-colors uppercase tracking-wider font-bold text-xs">Privacy Policy</a>
+                        <a href="#" className="hover:text-gray-400 transition-colors uppercase tracking-wider font-bold text-xs">Terms of Service</a>
                     </div>
                 </div>
             </footer>

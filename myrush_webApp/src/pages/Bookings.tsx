@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { apiClient } from '../api/client';
+// import { apiClient } from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import './Dashboard.css';
 
@@ -23,7 +23,7 @@ const MOCK_BOOKINGS: Booking[] = [
 export const Bookings: React.FC = () => {
     const navigate = useNavigate();
     const { logout } = useAuth();
-    const [bookings, setBookings] = useState<Booking[]>(MOCK_BOOKINGS);
+    const [bookings] = useState<Booking[]>(MOCK_BOOKINGS);
 
     const handleLogout = () => {
         logout();

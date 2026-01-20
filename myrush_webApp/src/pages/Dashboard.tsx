@@ -2,9 +2,10 @@ import React, { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { apiClient } from '../api/client';
-import { motion } from 'framer-motion';
+import { motion, type Variants, useScroll, useTransform } from 'framer-motion';
 import { TopNav } from '../components/TopNav';
-import './Dashboard.css';
+import { Button } from '../components/ui/Button';
+// import { Card } from '../components/ui/Card';
 
 interface UserProfile {
     id: string;
@@ -15,34 +16,36 @@ interface UserProfile {
     phone_number: string;
 }
 
-// Animation Variants
-const fadeInUp = {
-    hidden: { opacity: 0, y: 40 },
+const fadeInUp: Variants = {
+    hidden: { opacity: 0, y: 30 },
     visible: (i: number) => ({
         opacity: 1,
         y: 0,
-        transition: {
-            delay: i * 0.15,
-            duration: 0.6,
-            ease: [0.22, 1, 0.36, 1]
-        }
+        transition: { delay: i * 0.1, duration: 0.5, ease: "easeOut" }
     })
 };
 
-const staggerContainer = {
-    hidden: { opacity: 0 },
-    visible: {
-        opacity: 1,
+const marqueeVariants: Variants = {
+    animate: {
+        x: [0, -1035],
         transition: {
-            staggerChildren: 0.12
-        }
-    }
+            x: {
+                repeat: Infinity,
+                repeatType: "loop",
+                duration: 20,
+                ease: "linear",
+            },
+        },
+    },
 };
 
 export const Dashboard: React.FC = () => {
     const { logout } = useAuth();
     const navigate = useNavigate();
     const [user, setUser] = useState<UserProfile | null>(null);
+    const { scrollY } = useScroll();
+    const heroY = useTransform(scrollY, [0, 500], [0, 150]);
+    const heroOpacity = useTransform(scrollY, [0, 400], [1, 0.5]);
 
     useEffect(() => {
         const fetchProfile = async () => {
@@ -64,166 +67,217 @@ export const Dashboard: React.FC = () => {
     const displayName = user?.full_name?.split(' ')[0] || user?.first_name || 'Player';
 
     return (
-        <div className="dashboard-modern">
+        <div className="min-h-screen bg-gray-50 font-inter pb-24 md:pb-0 overflow-x-hidden">
             <TopNav userName={displayName} onLogout={handleLogout} />
 
-            {/* Hero Section */}
-            <section className="hero-modern">
-                <div className="hero-bg-modern">
-                    <div className="hero-gradient"></div>
-                </div>
+            {/* IMMERSIVE HERO SECTION */}
+            <section className="relative h-[85vh] flex items-center justify-center overflow-hidden bg-black">
+                {/* Parallax Background Image */}
+                <motion.div
+                    style={{ y: heroY, opacity: heroOpacity }}
+                    className="absolute inset-0 z-0"
+                >
+                    <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent z-10" />
+                    <img
+                        src="https://images.unsplash.com/photo-1579952363873-27f3bade9f55?q=80&w=3000&auto=format&fit=crop"
+                        alt="Football Field Night"
+                        className="w-full h-full object-cover opacity-80"
+                    />
+                </motion.div>
 
-                <div className="hero-content-modern">
+                {/* Hero Content */}
+                <div className="relative z-20 text-center px-4 max-w-5xl mx-auto mt-16">
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ duration: 0.8 }}
+                        className="inline-block mb-4 px-6 py-2 rounded-full border border-white/20 bg-white/10 backdrop-blur-md text-sm font-bold text-primary tracking-widest uppercase"
+                    >
+                        Welcome to the Arena
+                    </motion.div>
+
                     <motion.h1
-                        initial={{ opacity: 0, y: 30 }}
+                        className="text-6xl md:text-8xl font-black font-montserrat tracking-tighter text-white mb-6 uppercase leading-tight"
+                        initial={{ opacity: 0, y: 50 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.8, delay: 0.2 }}
                     >
-                        For All Things <span className="highlight-green">Sport.</span>
+                        Unleash Your <br />
+                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-emerald-400 drop-shadow-[0_0_25px_rgba(0,210,106,0.6)]">
+                            Inner Athlete
+                        </span>
                     </motion.h1>
 
                     <motion.p
-                        className="hero-subtitle"
-                        initial={{ opacity: 0, y: 20 }}
+                        className="text-lg md:text-2xl text-gray-300 mb-10 max-w-2xl mx-auto font-medium"
+                        initial={{ opacity: 0, y: 40 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.8, delay: 0.4 }}
                     >
-                        Book venues, join academies, compete in events — your ultimate sports platform.
+                        The ultimate platform to book top-tier venues, join academies, and dominate the league.
                     </motion.p>
 
-                    <motion.button
-                        className="cta-btn-modern"
-                        initial={{ opacity: 0, scale: 0.9 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        transition={{ duration: 0.6, delay: 0.6 }}
-                        whileHover={{ scale: 1.05, boxShadow: '0 12px 30px rgba(0, 210, 106, 0.3)' }}
-                        whileTap={{ scale: 0.98 }}
-                        onClick={() => navigate('/venues')}
+                    <motion.div
+                        className="flex flex-col md:flex-row items-center justify-center gap-4"
+                        initial={{ opacity: 0, y: 30 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.8, delay: 0.6 }}
                     >
-                        Book a Court
-                    </motion.button>
+                        <Button
+                            variant="primary"
+                            size="lg"
+                            onClick={() => navigate('/venues')}
+                            className="bg-primary text-black hover:bg-white hover:text-black text-lg px-12 py-5 uppercase tracking-wider font-montserrat font-bold shadow-[0_0_20px_rgba(0,210,106,0.4)]"
+                        >
+                            Start Playing Now
+                        </Button>
+                        <button
+                            onClick={() => navigate('/bookings')}
+                            className="px-8 py-5 rounded-full border border-white/30 text-white font-bold hover:bg-white/10 transition-all backdrop-blur-sm uppercase tracking-wide"
+                        >
+                            View My Bookings
+                        </button>
+                    </motion.div>
                 </div>
             </section>
 
-            {/* Quick Stats */}
-            <section className="stats-section">
+            {/* MARQUEE STRIP */}
+            <div className="bg-primary overflow-hidden py-3 rotate-1 md:rotate-0 transform origin-left md:origin-center z-30 relative shadow-glow">
                 <motion.div
-                    className="stats-grid"
-                    variants={staggerContainer}
-                    initial="hidden"
-                    whileInView="visible"
-                    viewport={{ once: true, margin: '-100px' }}
+                    className="flex whitespace-nowrap"
+                    variants={marqueeVariants}
+                    animate="animate"
                 >
-                    {[
-                        { value: '50+', label: 'Venues', icon: '🏟️' },
-                        { value: '500+', label: 'Games Hosted', icon: '⚽' },
-                        { value: '1000+', label: 'Active Players', icon: '👥' }
-                    ].map((stat, i) => (
-                        <motion.div
-                            key={i}
-                            className="stat-card"
-                            variants={fadeInUp}
-                            custom={i}
-                            whileHover={{ y: -8 }}
-                        >
-                            <div className="stat-icon">{stat.icon}</div>
-                            <div className="stat-value">{stat.value}</div>
-                            <div className="stat-label">{stat.label}</div>
-                        </motion.div>
+                    {[...Array(10)].map((_, i) => (
+                        <span key={i} className="text-black font-black text-xl md:text-2xl mx-8 uppercase font-montserrat tracking-widest flex items-center gap-4">
+                            BOOK • PLAY • COMPETE • WIN • REPEAT •
+                        </span>
                     ))}
                 </motion.div>
+            </div>
+
+            {/* BENTO GRID MENU SECTION */}
+            <section className="max-w-7xl mx-auto px-4 py-24 relative">
+                <div className="flex flex-col md:flex-row justify-between items-end mb-16 gap-6">
+                    <div>
+                        <h2 className="text-4xl md:text-5xl font-black text-black font-montserrat uppercase leading-none mb-2">
+                            Explore <span className="text-primary">The Hub</span>
+                        </h2>
+                        <p className="text-gray-500 font-medium text-lg">Everything you need to level up your game.</p>
+                    </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-4 md:grid-rows-2 gap-6 h-auto md:h-[600px]">
+
+                    {/* BOOK VENUES - Large Feature */}
+                    <motion.div
+                        className="md:col-span-2 md:row-span-2 group relative overflow-hidden rounded-3xl bg-black cursor-pointer shadow-2xl"
+                        custom={0} variants={fadeInUp} initial="hidden" whileInView="visible" viewport={{ once: true }}
+                        onClick={() => navigate('/venues')}
+                    >
+                        <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1552667466-07770ae110d0?q=80&w=2070')] bg-cover bg-center transition-transform duration-700 group-hover:scale-110 opacity-60"></div>
+                        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent"></div>
+
+                        <div className="absolute bottom-0 left-0 p-8">
+                            <div className="bg-primary text-black text-xs font-bold px-3 py-1 rounded-full w-fit mb-4 uppercase tracking-wider">Most Popular</div>
+                            <h3 className="text-4xl font-black text-white font-montserrat mb-2 uppercase italic">Book Venues</h3>
+                            <p className="text-gray-300 max-w-xs mb-6 font-medium">Find premium turfs, courts, and fields near you available 24/7.</p>
+                            <div className="flex items-center text-white font-bold group-hover:translate-x-2 transition-transform">
+                                <span className="bg-white/20 p-3 rounded-full mr-3 backdrop-blur-md">🏟️</span>
+                                Find a Court
+                            </div>
+                        </div>
+                    </motion.div>
+
+                    {/* JOIN ACADEMY */}
+                    <motion.div
+                        className="md:col-span-1 md:row-span-1 group relative overflow-hidden rounded-3xl bg-white border border-gray-100 cursor-pointer shadow-lg hover:shadow-xl transition-all"
+                        custom={1} variants={fadeInUp} initial="hidden" whileInView="visible" viewport={{ once: true }}
+                        onClick={() => { }}
+                    >
+                        <div className="absolute inset-0 bg-gradient-to-br from-white to-gray-50 group-hover:bg-gray-50 transition-colors"></div>
+                        <div className="absolute top-0 right-0 p-32 bg-primary/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 group-hover:bg-primary/10 transition-colors"></div>
+
+                        <div className="relative p-6 h-full flex flex-col justify-between">
+                            <div className="bg-gray-100 w-12 h-12 rounded-2xl flex items-center justify-center text-2xl mb-4 group-hover:scale-110 transition-transform">🎓</div>
+                            <div>
+                                <h3 className="text-xl font-bold text-black font-montserrat uppercase">Academy</h3>
+                                <p className="text-sm text-gray-500 font-medium mt-1">Train with pros.</p>
+                            </div>
+                            <div className="absolute top-6 right-6 opacity-0 group-hover:opacity-100 transition-opacity text-primary">↗</div>
+                        </div>
+                    </motion.div>
+
+                    {/* PROFILE / STATS */}
+                    <motion.div
+                        className="md:col-span-1 md:row-span-1 group relative overflow-hidden rounded-3xl bg-black cursor-pointer shadow-lg"
+                        custom={2} variants={fadeInUp} initial="hidden" whileInView="visible" viewport={{ once: true }}
+                        onClick={() => navigate('/profile')}
+                    >
+                        <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1517466787929-bc90951d0974?q=80&w=1962')] bg-cover bg-center opacity-40 group-hover:opacity-30 transition-opacity"></div>
+                        <div className="relative p-6 h-full flex flex-col justify-center items-center text-center">
+                            <div className="w-16 h-16 rounded-full border-2 border-primary p-1 mb-3">
+                                <div className="w-full h-full bg-gray-800 rounded-full flex items-center justify-center text-2xl">👤</div>
+                            </div>
+                            <h3 className="text-lg font-bold text-white uppercase">{displayName}</h3>
+                            <p className="text-xs text-primary font-bold uppercase tracking-wider mt-1">View Profile</p>
+                        </div>
+                    </motion.div>
+
+                    {/* COMPETE / LEAGUES */}
+                    <motion.div
+                        className="md:col-span-2 md:row-span-1 group relative overflow-hidden rounded-3xl bg-accent cursor-pointer shadow-xl shadow-accent/20"
+                        custom={3} variants={fadeInUp} initial="hidden" whileInView="visible" viewport={{ once: true }}
+                    >
+                        <div className="absolute inset-0 bg-[linear-gradient(45deg,transparent_25%,rgba(255,255,255,0.1)_50%,transparent_75%,transparent_100%)] bg-[length:250%_250%,100%_100%] bg-[position:-100%_0,0_0] bg-no-repeat transition-[background-position_0s] duration-[0ms] group-hover:bg-[position:200%_0,0_0] group-hover:duration-[1000ms] group-hover:transition-[background-position]"></div>
+
+                        <div className="relative p-8 flex items-center justify-between h-full">
+                            <div>
+                                <div className="flex items-center gap-2 mb-2">
+                                    <span className="text-xs font-bold bg-white text-accent px-2 py-0.5 rounded uppercase">Coming Soon</span>
+                                </div>
+                                <h3 className="text-3xl font-black text-white font-montserrat uppercase italic">Leagues & <br />Tournaments</h3>
+                            </div>
+                            <div className="text-6xl opacity-50 rotate-12 group-hover:rotate-0 group-hover:scale-110 transition-all duration-300">🏆</div>
+                        </div>
+                    </motion.div>
+
+                </div>
             </section>
 
-            {/* Services Section */}
-            <section className="services-section-modern">
-                <motion.div
-                    className="section-header-modern"
-                    initial={{ opacity: 0, y: 30 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true }}
-                    transition={{ duration: 0.8 }}
-                >
-                    <h2>Explore <span className="highlight-green">Rush</span></h2>
-                    <p>Everything you need for your sporting journey</p>
-                </motion.div>
-
-                <motion.div
-                    className="services-grid"
-                    variants={staggerContainer}
-                    initial="hidden"
-                    whileInView="visible"
-                    viewport={{ once: true, margin: '-100px' }}
-                >
+            {/* STATS STRIP */}
+            <section className="bg-white border-y border-gray-100 py-16">
+                <div className="max-w-7xl mx-auto px-4 grid grid-cols-2 md:grid-cols-4 gap-8 text-center divide-x divide-gray-100">
                     {[
-                        {
-                            title: 'Book Venues',
-                            desc: 'Premium turfs and courts available 24/7',
-                            icon: '🏟️',
-                            link: '/venues',
-                            color: '#00D26A'
-                        },
-                        {
-                            title: 'Join Academy',
-                            desc: 'Train with professional coaches',
-                            icon: '🎓',
-                            color: '#FF6B6B'
-                        },
-                        {
-                            title: 'Compete',
-                            desc: 'Tournaments and leagues year-round',
-                            icon: '🏆',
-                            color: '#FFD93D'
-                        },
-                        {
-                            title: 'Corporate Events',
-                            desc: 'Team building and sports days',
-                            icon: '🤝',
-                            color: '#6C5CE7'
-                        }
-                    ].map((service, i) => (
-                        <motion.div
-                            key={i}
-                            className="service-card"
-                            variants={fadeInUp}
-                            custom={i}
-                            whileHover={{
-                                y: -12,
-                                boxShadow: '0 20px 60px rgba(0, 0, 0, 0.12)',
-                                transition: { duration: 0.3 }
-                            }}
-                            onClick={() => service.link && navigate(service.link)}
-                            style={{ cursor: service.link ? 'pointer' : 'default' }}
-                        >
-                            <div className="service-icon-wrapper">
-                                <div className="service-icon" style={{ background: `${service.color}15` }}>
-                                    <span>{service.icon}</span>
-                                </div>
-                            </div>
-                            <h3>{service.title}</h3>
-                            <p>{service.desc}</p>
-                            {service.link && <div className="service-arrow">→</div>}
-                        </motion.div>
+                        { value: '50+', label: 'Premium Venues' },
+                        { value: '24/7', label: 'Availability' },
+                        { value: '10k+', label: 'Game Hours' },
+                        { value: '4.9/5', label: 'Player Rating' },
+                    ].map((stat, i) => (
+                        <div key={i} className="flex flex-col items-center">
+                            <span className="text-3xl md:text-5xl font-black text-black font-montserrat mb-2">{stat.value}</span>
+                            <span className="text-sm font-bold text-gray-400 uppercase tracking-widest">{stat.label}</span>
+                        </div>
                     ))}
-                </motion.div>
+                </div>
             </section>
 
             {/* Mobile Bottom Nav */}
-            <nav className="mobile-bottom-nav">
-                <div className={`mobile-nav-item ${location.pathname === '/' ? 'active' : ''}`} onClick={() => navigate('/')}>
-                    <span>🏠</span>
-                    <span className="label">Home</span>
+            <nav className="md:hidden fixed bottom-6 left-4 right-4 bg-black/90 backdrop-blur-xl border border-white/10 py-4 px-6 rounded-full flex justify-between items-center z-50 shadow-2xl">
+                <div className={`flex flex-col items-center gap-1 ${location.pathname === '/' ? 'text-primary' : 'text-gray-500'}`} onClick={() => navigate('/')}>
+                    <span className="text-xl">🏠</span>
                 </div>
-                <div className={`mobile-nav-item ${location.pathname === '/venues' ? 'active' : ''}`} onClick={() => navigate('/venues')}>
-                    <span>🏟️</span>
-                    <span className="label">Venues</span>
+                <div className={`flex flex-col items-center gap-1 ${location.pathname === '/venues' ? 'text-primary' : 'text-gray-500'}`} onClick={() => navigate('/venues')}>
+                    <span className="text-xl">🏟️</span>
                 </div>
-                <div className={`mobile-nav-item ${location.pathname === '/bookings' ? 'active' : ''}`} onClick={() => navigate('/bookings')}>
-                    <span>📅</span>
-                    <span className="label">Bookings</span>
+                <div className="relative -top-8 bg-primary p-4 rounded-full shadow-glow border-4 border-gray-100" onClick={() => navigate('/venues')}>
+                    <span className="text-2xl text-black">⚽</span>
                 </div>
-                <div className={`mobile-nav-item ${location.pathname === '/profile' ? 'active' : ''}`} onClick={() => navigate('/profile')}>
-                    <span>👤</span>
-                    <span className="label">Profile</span>
+                <div className={`flex flex-col items-center gap-1 ${location.pathname === '/bookings' ? 'text-primary' : 'text-gray-500'}`} onClick={() => navigate('/bookings')}>
+                    <span className="text-xl">📅</span>
+                </div>
+                <div className={`flex flex-col items-center gap-1 ${location.pathname === '/profile' ? 'text-primary' : 'text-gray-500'}`} onClick={() => navigate('/profile')}>
+                    <span className="text-xl">👤</span>
                 </div>
             </nav>
         </div>
