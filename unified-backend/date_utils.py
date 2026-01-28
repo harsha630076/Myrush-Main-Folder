@@ -214,13 +214,13 @@ def parse_time_safe(
         )
 
 # FastAPI-compatible query parameter types for OpenAPI/Swagger documentation
-DateQueryParam = Query(..., description="Date in YYYY-MM-DD format", example="2026-01-30")
-DatetimeQueryParam = Query(..., description="Datetime in YYYY-MM-DD HH:MM:SS format", example="2026-01-30 14:30:00")
-TimeQueryParam = Query(..., description="Time in HH:MM:SS format", example="14:30:00")
+DateQueryParam = Query(..., description="Date in YYYY-MM-DD format", examples=["2026-01-30"])
+DatetimeQueryParam = Query(..., description="Datetime in YYYY-MM-DD HH:MM:SS format", examples=["2026-01-30 14:30:00"])
+TimeQueryParam = Query(..., description="Time in HH:MM:SS format", examples=["14:30:00"])
 
 def create_date_query_param(
     description: str = "Date in YYYY-MM-DD format",
-    example: str = "2026-01-30",
+    examples: list[str] = ["2026-01-30"],
     alias: Optional[str] = None
 ):
     """
@@ -242,4 +242,4 @@ def create_date_query_param(
         ):
             booking_date = parse_date_safe(date)
     """
-    return Query(..., description=description, example=example, alias=alias)
+    return Query(..., description=description, examples=examples, alias=alias)
