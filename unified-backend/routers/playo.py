@@ -378,7 +378,6 @@ async def create_order(
                 end_time=order_data['end_time'],
                 price=order_data['price'],
                 status='pending',
-                status='pending',
                 expires_at=datetime.utcnow() + timedelta(minutes=15),  # 15 min expiry
                 # Store user details
                 user_name=request.userName,
