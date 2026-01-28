@@ -9,7 +9,7 @@ from typing import List, Optional
 from datetime import datetime, timedelta, time as dt_time, date
 from uuid import UUID, uuid4
 from decimal import Decimal
-import schemas, models, database, dependencies, auth
+import schemas, models, database, dependencies, crud
 from date_utils import parse_date_safe, parse_time_safe
 import logging
 
@@ -110,12 +110,19 @@ def get_or_create_playo_user(
     
     if not user:
         # Create new user
+        try:
+             # Use a dummy password hash from crud or hardcoded
+             hashed_pw = crud.get_password_hash("playo_user_temp")
+        except:
+             hashed_pw = "dummy_hash"
+
         user = models.User(
             phone_number=mobile,
             full_name=name,
             first_name=name.split(' ')[0] if name else "Playo",
             last_name=' '.join(name.split(' ')[1:]) if name and ' ' in name else "User",
-            email=email if email else f"{mobile}@playo.temp", # Ensure email uniqueness logic or just fallback
+            email=email if email else f"{mobile}@playo.temp", 
+            hashed_password=hashed_pw,
             is_verified=True, # Trusted via Playo
             is_active=True,
             profile_completed=False,
