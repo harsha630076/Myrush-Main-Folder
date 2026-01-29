@@ -1255,3 +1255,30 @@
     "endpoint": "/test-rate-limiting"
   }
 }
+{
+  "timestamp": "2026-01-28T05:35:15.679255Z",
+  "level": "WARNING",
+  "logger": "myrush_backend",
+  "message": "Missing required environment variables for error alerts: ERROR_ALERT_RECIPIENTS",
+  "module": "error_alert_service",
+  "function": "configure_error_alerts",
+  "line": 304
+}
+{
+  "timestamp": "2026-01-28T05:35:15.680079Z",
+  "level": "WARNING",
+  "logger": "myrush_backend",
+  "message": "Error alert emails will not be sent until these are configured.",
+  "module": "error_alert_service",
+  "function": "configure_error_alerts",
+  "line": 305
+}
+{
+  "timestamp": "2026-01-28T05:46:17.832857Z",
+  "level": "INFO",
+  "logger": "myrush_backend",
+  "message": "Error alert system configured successfully",
+  "module": "error_alert_service",
+  "function": "configure_error_alerts",
+  "line": 308
+}
